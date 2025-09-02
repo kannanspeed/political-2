@@ -1,60 +1,74 @@
 #!/usr/bin/env python3
 """
-Database initialization script for Political Events Platform
+Database Initialization Script for Political Events App
+Run this script to create all database tables and initial data.
 """
 
-import os
-import sys
-from dotenv import load_dotenv
-
-# Load environment variables
-load_dotenv()
+from app_production import app, db, User
+from werkzeug.security import generate_password_hash
 
 def init_database():
-    """Initialize the database and create tables"""
-    print("🗄️ Initializing Political Events Database")
-    print("=" * 40)
-    
-    try:
-        # Import the app and database
-        from app import app, db, User
-        from werkzeug.security import generate_password_hash
+    """Initialize the database with tables and initial data."""
+    with app.app_context():
+        print("Creating database tables...")
+        db.create_all()
+        print("✅ Database tables created successfully!")
         
-        with app.app_context():
-            # Create all tables
-            print("📋 Creating database tables...")
-            db.create_all()
-            print("✅ Database tables created successfully")
-            
-            # Create admin user if not exists
-            print("👑 Checking for admin user...")
-            admin = User.query.filter_by(role='admin').first()
-            if not admin:
-                admin = User(
-                    email='admin@political.com',
-                    password_hash=generate_password_hash('admin123'),
-                    role='admin'
-                )
-                db.session.add(admin)
-                db.session.commit()
-                print("✅ Admin user created successfully")
-                print("   Email: admin@political.com")
-                print("   Password: admin123")
-            else:
-                print("✅ Admin user already exists")
-            
-            print("\n🎉 Database initialization completed!")
-            print("🚀 You can now run the application with: python run.py")
-            
-    except ImportError as e:
-        print(f"❌ Import error: {e}")
-        print("Please install all required packages:")
-        print("  pip install -r requirements.txt")
-        sys.exit(1)
-    except Exception as e:
-        print(f"❌ Database initialization error: {e}")
-        sys.exit(1)
+        # Check if admin user exists
+        admin = User.query.filter_by(role='admin').first()
+        if not admin:
+            print("Creating admin user...")
+            admin = User(
+                email='admin@political.com',
+                phone='1234567890',
+                password_hash=generate_password_hash('admin123'),
+                role='admin'
+            )
+            db.session.add(admin)
+            db.session.commit()
+            print("✅ Admin user created: admin@political.com / admin123")
+        else:
+            print("✅ Admin user already exists")
+        
+        # Check if demo party user exists
+        party_user = User.query.filter_by(role='party').first()
+        if not party_user:
+            print("Creating demo party user...")
+            party_user = User(
+                email='party@demo.com',
+                phone='9876543210',
+                password_hash=generate_password_hash('party123'),
+                role='party',
+                party_name='Demo Political Party'
+            )
+            db.session.add(party_user)
+            db.session.commit()
+            print("✅ Demo party user created: party@demo.com / party123")
+        else:
+            print("✅ Demo party user already exists")
+        
+        # Check if demo regular user exists
+        regular_user = User.query.filter_by(role='user').first()
+        if not regular_user:
+            print("Creating demo regular user...")
+            regular_user = User(
+                email='user@demo.com',
+                phone='5555555555',
+                password_hash=generate_password_hash('user123'),
+                role='user'
+            )
+            db.session.add(regular_user)
+            db.session.commit()
+            print("✅ Demo regular user created: user@demo.com / user123")
+        else:
+            print("✅ Demo regular user already exists")
+        
+        print("\n🎉 Database initialization complete!")
+        print("\n📋 Demo Accounts:")
+        print("   Admin: admin@political.com / admin123")
+        print("   Party: party@demo.com / party123")
+        print("   User:  user@demo.com / user123")
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     init_database()
 

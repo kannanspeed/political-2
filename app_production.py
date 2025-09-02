@@ -123,6 +123,26 @@ class Notification(db.Model):
 def load_user(user_id):
     return User.query.get(int(user_id))
 
+# Health Check Route
+@app.route('/health')
+def health_check():
+    """Health check endpoint for deployment monitoring."""
+    try:
+        # Test database connection
+        db.session.execute('SELECT 1')
+        return jsonify({
+            'status': 'healthy',
+            'database': 'connected',
+            'timestamp': datetime.utcnow().isoformat()
+        }), 200
+    except Exception as e:
+        return jsonify({
+            'status': 'unhealthy',
+            'database': 'disconnected',
+            'error': str(e),
+            'timestamp': datetime.utcnow().isoformat()
+        }), 500
+
 # Routes
 @app.route('/')
 def index():
@@ -374,19 +394,22 @@ def internal_error(error):
     db.session.rollback()
     return render_template('errors/500.html'), 500
 
-if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
-        
-        # Create admin user if not exists
-        admin = User.query.filter_by(role='admin').first()
-        if not admin:
-            admin = User(
-                email='admin@political.com',
-                password_hash=generate_password_hash('admin123'),
-                role='admin'
-            )
-            db.session.add(admin)
-            db.session.commit()
+# Initialize database tables
+with app.app_context():
+    db.create_all()
     
+    # Create admin user if not exists
+    admin = User.query.filter_by(role='admin').first()
+    if not admin:
+        admin = User(
+            email='admin@political.com',
+            phone='1234567890',
+            password_hash=generate_password_hash('admin123'),
+            role='admin'
+        )
+        db.session.add(admin)
+        db.session.commit()
+        print("Admin user created: admin@political.com / admin123")
+
+if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
