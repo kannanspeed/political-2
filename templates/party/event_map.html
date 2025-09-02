@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{{ event.title }} - Live Map{% endblock %}
+{% block title %}Event Map - {{ event.title }}{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
@@ -8,275 +8,165 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h1 class="h2 mb-1">
-                <i class="fas fa-map me-2 text-success"></i>
-                Live Map: {{ event.title }}
+                <i class="fas fa-map-marked-alt me-2 text-success"></i>
+                Event Map: {{ event.title }}
             </h1>
-            <p class="text-muted mb-0">Real-time location tracking of registered users</p>
+            <p class="text-muted mb-0">View event location and registrations on map</p>
         </div>
         <div class="d-flex gap-2">
-            <a href="{{ url_for('party_event_detail', event_id=event.id) }}" class="btn btn-outline-secondary">
-                <i class="fas fa-arrow-left me-2"></i>Back to Event
+            <a href="{{ url_for('party_event_detail', event_id=event.id) }}" class="btn btn-outline-primary">
+                <i class="fas fa-eye me-2"></i>Event Details
             </a>
-            <button class="btn btn-outline-primary" onclick="refreshMap()">
-                <i class="fas fa-sync-alt me-2"></i>Refresh Map
-            </button>
+            <a href="{{ url_for('party_dashboard') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+            </a>
         </div>
     </div>
 
-    <!-- Map Controls -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-body">
-                    <div class="row g-3 align-items-center">
-                        <div class="col-md-2">
-                            <label class="form-label fw-semibold">
-                                <i class="fas fa-filter me-2"></i>Status
-                            </label>
-                            <select class="form-select" id="statusFilter" onchange="filterMarkers()">
-                                <option value="all">All Users</option>
-                                <option value="registered">Registered Only</option>
-                                <option value="attended">Present Only</option>
-                                <option value="pending">Pending Attendance</option>
-                            </select>
-                        </div>
-                        <div class="col-md-2">
-                            <label class="form-label fw-semibold">
-                                <i class="fas fa-ruler me-2"></i>Distance
-                            </label>
-                            <select class="form-select" id="distanceFilter" onchange="filterMarkers()">
-                                <option value="all">Any Distance</option>
-                                <option value="5">Within 5 km</option>
-                                <option value="10">Within 10 km</option>
-                                <option value="25">Within 25 km</option>
-                                <option value="50">Within 50 km</option>
-                            </select>
-                        </div>
-                        <div class="col-md-2">
-                            <label class="form-label fw-semibold">
-                                <i class="fas fa-eye me-2"></i>Map View
-                            </label>
-                            <select class="form-select" id="mapView" onchange="changeMapView()">
-                                <option value="roadmap">Roadmap</option>
-                                <option value="satellite">Satellite</option>
-                                <option value="hybrid">Hybrid</option>
-                                <option value="terrain">Terrain</option>
-                            </select>
-                        </div>
-                        <div class="col-md-2">
-                            <label class="form-label fw-semibold">
-                                <i class="fas fa-cog me-2"></i>Auto-refresh
-                            </label>
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="autoRefresh" onchange="toggleAutoRefresh()">
-                                <label class="form-check-label" for="autoRefresh">Enable</label>
-                            </div>
-                        </div>
-                        <div class="col-md-2">
-                            <label class="form-label fw-semibold">
-                                <i class="fas fa-layer-group me-2"></i>Layers
-                            </label>
-                            <div class="d-flex gap-2">
-                                <button class="btn btn-outline-primary btn-sm" onclick="toggleHeatmap()" id="heatmapBtn">
-                                    <i class="fas fa-fire me-1"></i>Heatmap
-                                </button>
-                                <button class="btn btn-outline-success btn-sm" onclick="toggleClustering()" id="clusteringBtn">
-                                    <i class="fas fa-object-group me-1"></i>Cluster
-                                </button>
-                            </div>
-                        </div>
-                        <div class="col-md-2">
-                            <label class="form-label fw-semibold">
-                                <i class="fas fa-search me-2"></i>Search
-                            </label>
-                            <input type="text" class="form-control" id="mapSearch" placeholder="Search area..." onkeyup="searchLocation()">
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Registration Analytics -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header bg-transparent">
-                    <h6 class="mb-0">
-                        <i class="fas fa-chart-bar me-2 text-info"></i>
-                        Registration Analytics & Hotspots
-                    </h6>
-                </div>
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-md-3">
-                            <div class="analytics-item text-center p-3 border rounded">
-                                <i class="fas fa-map-marker-alt fa-2x text-primary mb-2"></i>
-                                <h5 class="mb-1" id="totalLocations">{{ registrations|selectattr('latitude', 'defined')|selectattr('longitude', 'defined')|list|length }}</h5>
-                                <small class="text-muted">Users with Location</small>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="analytics-item text-center p-3 border rounded">
-                                <i class="fas fa-fire fa-2x text-danger mb-2"></i>
-                                <h5 class="mb-1" id="hotspotCount">0</h5>
-                                <small class="text-muted">Registration Hotspots</small>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="analytics-item text-center p-3 border rounded">
-                                <i class="fas fa-ruler fa-2x text-success mb-2"></i>
-                                <h5 class="mb-1" id="avgDistance">0</h5>
-                                <small class="text-muted">Avg Distance (km)</small>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="analytics-item text-center p-3 border rounded">
-                                <i class="fas fa-users fa-2x text-warning mb-2"></i>
-                                <h5 class="mb-1" id="closestUsers">0</h5>
-                                <small class="text-muted">Within 5km</small>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row mt-3">
-                        <div class="col-12">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <h6 class="mb-2">Top Registration Areas</h6>
-                                <button class="btn btn-outline-primary btn-sm" onclick="showHotspotDetails()">
-                                    <i class="fas fa-info-circle me-1"></i>View Details
-                                </button>
-                            </div>
-                            <div id="hotspotList" class="row g-2">
-                                <!-- Hotspots will be populated here -->
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Main Map -->
     <div class="row">
+        <!-- Map Section -->
         <div class="col-lg-8">
             <div class="card">
-                <div class="card-body p-0">
-                    <div id="liveMap" style="height: 600px; border-radius: 8px;"></div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Sidebar -->
-        <div class="col-lg-4">
-            <!-- Event Summary -->
-            <div class="card mb-4">
-                <div class="card-header bg-transparent">
-                    <h6 class="mb-0">
-                        <i class="fas fa-info-circle me-2 text-info"></i>
-                        Event Summary
-                    </h6>
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-map me-2 text-success"></i>
+                        Event Location & Registrations
+                    </h5>
                 </div>
                 <div class="card-body">
-                    <div class="row g-2">
-                        <div class="col-6">
-                            <small class="text-muted">Total Registered</small>
-                            <p class="mb-0 fw-bold">{{ registrations|length }}</p>
-                        </div>
-                        <div class="col-6">
-                            <small class="text-muted">Present</small>
-                            <p class="mb-0 fw-bold text-success">
-                                {{ registrations|selectattr('attended', 'equalto', true)|list|length }}
-                            </p>
-                        </div>
-                        <div class="col-6">
-                            <small class="text-muted">Pending</small>
-                            <p class="mb-0 fw-bold text-warning">
-                                {{ registrations|selectattr('attended', 'equalto', false)|list|length }}
-                            </p>
-                        </div>
-                        <div class="col-6">
-                            <small class="text-muted">With Location</small>
-                            <p class="mb-0 fw-bold text-primary">
-                                {{ registrations|selectattr('latitude', 'defined')|selectattr('longitude', 'defined')|list|length }}
-                            </p>
+                    <div id="eventMap" style="height: 500px; border-radius: 8px; background-color: #f8f9fa;">
+                        <div class="text-center py-5">
+                            <i class="fas fa-map fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">Map will be displayed here</p>
+                            <small class="text-muted">Google Maps integration would be implemented here</small>
                         </div>
                     </div>
-                </div>
-            </div>
-
-            <!-- User List -->
-            <div class="card">
-                <div class="card-header bg-transparent">
-                    <h6 class="mb-0">
-                        <i class="fas fa-users me-2 text-primary"></i>
-                        Users on Map
-                    </h6>
-                </div>
-                <div class="card-body">
-                    <div id="userList">
-                        {% if registrations %}
-                            {% for registration in registrations %}
-                                {% if registration.latitude and registration.longitude %}
-                                <div class="user-item mb-3 p-3 border rounded" data-user-id="{{ registration.user_id }}" data-lat="{{ registration.latitude }}" data-lng="{{ registration.longitude }}" data-status="{{ 'attended' if registration.attended else 'pending' }}">
-                                    <div class="d-flex justify-content-between align-items-start">
-                                        <div>
-                                            <h6 class="mb-1">User #{{ registration.user_id }}</h6>
-                                            <small class="text-muted">
-                                                {% if registration.user %}
-                                                    {{ registration.user.email }}
-                                                {% else %}
-                                                    Email not available
-                                                {% endif %}
-                                            </small>
-                                        </div>
-                                        <div class="text-end">
-                                            {% if registration.attended %}
-                                                <span class="badge bg-success">Present</span>
-                                            {% else %}
-                                                <span class="badge bg-warning">Pending</span>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                    <div class="mt-2">
-                                        <button class="btn btn-outline-primary btn-sm" onclick="centerOnUser({{ registration.latitude }}, {{ registration.longitude }})">
-                                            <i class="fas fa-crosshairs me-1"></i>Center
-                                        </button>
-                                        <button class="btn btn-outline-info btn-sm" onclick="showUserDetails({{ registration.user_id }})">
-                                            <i class="fas fa-eye me-1"></i>Details
-                                        </button>
+                    
+                    <div class="mt-3">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-map-marker-alt text-danger me-2"></i>
+                                    <div>
+                                        <strong>Event Location</strong>
+                                        <br>
+                                        <small class="text-muted">{{ event.location }}</small>
                                     </div>
                                 </div>
-                                {% endif %}
-                            {% endfor %}
-                        {% else %}
-                            <div class="text-center py-3">
-                                <i class="fas fa-map-marker-alt fa-2x text-muted mb-2"></i>
-                                <p class="text-muted mb-0">No users with location data</p>
                             </div>
-                        {% endif %}
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-coordinates text-primary me-2"></i>
+                                    <div>
+                                        <strong>Coordinates</strong>
+                                        <br>
+                                        <small class="text-muted">{{ "%.6f"|format(event.latitude) }}, {{ "%.6f"|format(event.longitude) }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-</div>
 
-<!-- User Details Modal -->
-<div class="modal fade" id="userDetailsModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">
-                    <i class="fas fa-user me-2 text-primary"></i>
-                    User Details
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        <!-- Registration Stats -->
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-pie me-2 text-info"></i>
+                        Registration Statistics
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <h2 class="text-primary mb-0">{{ registrations|length }}</h2>
+                        <p class="text-muted">Total Registrations</p>
+                    </div>
+                    
+                    <div class="row g-3 mb-4">
+                        <div class="col-6">
+                            <div class="text-center">
+                                <h5 class="text-success mb-0">
+                                    {{ registrations|selectattr('attended', 'equalto', true)|list|length }}
+                                </h5>
+                                <small class="text-muted">Attended</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-center">
+                                <h5 class="text-warning mb-0">
+                                    {{ registrations|selectattr('attended', 'equalto', false)|list|length }}
+                                </h5>
+                                <small class="text-muted">Registered</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="progress mb-3" style="height: 8px;">
+                        {% set attended_count = registrations|selectattr('attended', 'equalto', true)|list|length %}
+                        {% set total_count = registrations|length %}
+                        {% if total_count > 0 %}
+                            {% set attendance_rate = (attended_count / total_count * 100)|round %}
+                        {% else %}
+                            {% set attendance_rate = 0 %}
+                        {% endif %}
+                        <div class="progress-bar bg-success" role="progressbar" style="width: {{ attendance_rate }}%"></div>
+                    </div>
+                    <small class="text-muted">Attendance Rate: {{ attendance_rate }}%</small>
+                </div>
             </div>
-            <div class="modal-body" id="userDetailsContent">
-                <!-- User details will be loaded here -->
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+
+            <!-- Location Distribution -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-users me-2 text-warning"></i>
+                        Location Distribution
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if registrations %}
+                        <div class="mb-3">
+                            <h6>Registrations by Area</h6>
+                            <small class="text-muted">Users registered from different locations</small>
+                        </div>
+                        
+                        {% for registration in registrations[:5] %}
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="avatar-sm me-2">
+                                <i class="fas fa-user-circle fa-lg text-primary"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <small class="d-block">
+                                    {% if registration.user %}
+                                        {{ registration.user.email }}
+                                    {% else %}
+                                        User #{{ registration.user_id }}
+                                    {% endif %}
+                                </small>
+                                <small class="text-muted">
+                                    {{ "%.4f"|format(registration.latitude) }}, {{ "%.4f"|format(registration.longitude) }}
+                                </small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        
+                        {% if registrations|length > 5 %}
+                            <div class="text-center mt-2">
+                                <small class="text-muted">
+                                    +{{ registrations|length - 5 }} more registrations
+                                </small>
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-3">
+                            <i class="fas fa-users fa-2x text-muted mb-2"></i>
+                            <p class="text-muted mb-0">No registrations yet</p>
+                        </div>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </div>
@@ -284,655 +174,21 @@
 {% endblock %}
 
 {% block extra_js %}
-<!-- Google Maps with Visualization Library -->
-<script src="https://maps.googleapis.com/maps/api/js?key={{ config.GOOGLE_MAPS_API_KEY }}&libraries=visualization,geometry,places"></script>
-<!-- MarkerClusterer Library -->
-<script src="https://unpkg.com/@googlemaps/markerclusterer/dist/index.min.js"></script>
-
 <script>
-// Global variables
-let map;
-let markers = [];
-let currentInfoWindow = null;
-let autoRefreshInterval = null;
-let heatmap = null;
-let markerClusterer = null;
-let isHeatmapActive = false;
-let isClusteringActive = false;
-let hotspots = [];
+// This would contain Google Maps integration code
+// For now, it's a placeholder showing the structure
 
-// Initialize map when Google Maps API loads
-function initMap() {
-    console.log('Google Maps API loaded, initializing map...');
-    initializeLiveMap();
-    setupAutoRefresh();
-    analyzeRegistrations();
-}
-
-// Wait for Google Maps API to load
-function waitForGoogleMaps() {
-    if (typeof google !== 'undefined' && typeof google.maps !== 'undefined') {
-        console.log('Google Maps API detected, initializing...');
-        initMap();
-    } else {
-        console.log('Waiting for Google Maps API...');
-        setTimeout(waitForGoogleMaps, 100);
-    }
-}
-
-// Start initialization when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM loaded, waiting for Google Maps API...');
-    waitForGoogleMaps();
-});
-
-function initializeLiveMap() {
-    const mapElement = document.getElementById('liveMap');
-    if (!mapElement) return;
+    console.log('Event Map loaded for event: {{ event.title }}');
+    console.log('Event coordinates: {{ event.latitude }}, {{ event.longitude }}');
+    console.log('Total registrations: {{ registrations|length }}');
     
-    // Check if Google Maps API is loaded
-    if (typeof google === 'undefined' || typeof google.maps === 'undefined') {
-        console.error('Google Maps API not loaded');
-        showAlert('Google Maps API not loaded. Please refresh the page.', 'error');
-        return;
-    }
-    
-    try {
-        // Initialize Google Maps
-        map = new google.maps.Map(mapElement, {
-            zoom: 12,
-            center: { lat: {{ event.latitude }}, lng: {{ event.longitude }} },
-            mapTypeId: google.maps.MapTypeId.ROADMAP,
-            styles: [
-                {
-                    featureType: "poi",
-                    elementType: "labels",
-                    stylers: [{ visibility: "off" }]
-                }
-            ]
-        });
-        
-        // Add event marker (center)
-        const eventMarker = new google.maps.Marker({
-            position: { lat: {{ event.latitude }}, lng: {{ event.longitude }} },
-            map: map,
-            title: '{{ event.title }}',
-            icon: {
-                url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png',
-                scaledSize: new google.maps.Size(32, 32)
-            }
-        });
-        
-        // Add event info window
-        const eventInfoWindow = new google.maps.InfoWindow({
-            content: `
-                <div class="p-3">
-                    <h6 class="mb-2">{{ event.title }}</h6>
-                    <p class="mb-1"><strong>Location:</strong> {{ event.location }}</p>
-                    <p class="mb-1"><strong>Date:</strong> {{ event.event_date|format_datetime('%B %d, %Y %I:%M %p') }}</p>
-                    <p class="mb-0"><strong>Registered Users:</strong> {{ registrations|length }}</p>
-                </div>
-            `
-        });
-        
-        eventMarker.addListener('click', () => {
-            if (currentInfoWindow) {
-                currentInfoWindow.close();
-            }
-            eventInfoWindow.open(map, eventMarker);
-            currentInfoWindow = eventInfoWindow;
-        });
-        
-        // Add user markers
-        addUserMarkers();
-        
-        console.log('Map initialized successfully');
-    } catch (error) {
-        console.error('Error initializing map:', error);
-        showAlert('Error initializing map. Please refresh the page.', 'error');
-    }
-}
-
-function addUserMarkers() {
-    if (!map) {
-        console.error('Map not initialized');
-        return;
-    }
-    
-    // Clear existing markers
-    markers.forEach(marker => marker.setMap(null));
-    markers = [];
-    
-    try {
-        {% for registration in registrations %}
-            {% if registration.latitude and registration.longitude %}
-            const userMarker = new google.maps.Marker({
-                position: { lat: {{ registration.latitude }}, lng: {{ registration.longitude }} },
-                map: map,
-                title: 'User #{{ registration.user_id }}',
-                icon: {
-                    url: 'https://maps.google.com/mapfiles/ms/icons/{{ "green" if registration.attended else "blue" }}-dot.png',
-                    scaledSize: new google.maps.Size(24, 24)
-                },
-                userData: {
-                    id: {{ registration.user_id }},
-                    status: '{{ "attended" if registration.attended else "pending" }}',
-                    email: '{{ registration.user.email if registration.user else "N/A" }}',
-                    registeredAt: '{{ registration.registered_at|format_datetime("%b %d, %Y %I:%M %p") }}'
-                }
-            });
-            
-            // Add info window for user marker
-            const userInfoWindow = new google.maps.InfoWindow({
-                content: `
-                    <div class="p-3">
-                        <h6 class="mb-2">User #{{ registration.user_id }}</h6>
-                        <p class="mb-1"><strong>Status:</strong> 
-                            <span class="badge bg-{{ 'success' if registration.attended else 'warning' }}">
-                                {{ 'Present' if registration.attended else 'Pending' }}
-                            </span>
-                        </p>
-                        <p class="mb-1"><strong>Email:</strong> {{ registration.user.email if registration.user else 'N/A' }}</p>
-                        <p class="mb-0"><strong>Registered:</strong> {{ registration.registered_at|format_datetime("%b %d, %Y %I:%M %p") }}</p>
-                    </div>
-                `
-            });
-            
-            userMarker.addListener('click', () => {
-                if (currentInfoWindow) {
-                    currentInfoWindow.close();
-                }
-                userInfoWindow.open(map, userMarker);
-                currentInfoWindow = userInfoWindow;
-            });
-            
-            markers.push(userMarker);
-            {% endif %}
-        {% endfor %}
-        
-        console.log(`Added ${markers.length} user markers`);
-    } catch (error) {
-        console.error('Error adding user markers:', error);
-        showAlert('Error adding user markers to map.', 'error');
-    }
-}
-
-function filterMarkers() {
-    const statusFilter = document.getElementById('statusFilter').value;
-    const distanceFilter = document.getElementById('distanceFilter').value;
-    
-    markers.forEach(marker => {
-        let show = true;
-        
-        // Status filter
-        if (statusFilter !== 'all') {
-            if (statusFilter === 'attended' && marker.userData.status !== 'attended') {
-                show = false;
-            } else if (statusFilter === 'pending' && marker.userData.status !== 'pending') {
-                show = false;
-            }
-        }
-        
-        // Distance filter
-        if (distanceFilter !== 'all' && show) {
-            const distance = calculateDistance(
-                {{ event.latitude }}, {{ event.longitude }},
-                marker.getPosition().lat(), marker.getPosition().lng()
-            );
-            
-            if (distance > parseFloat(distanceFilter)) {
-                show = false;
-            }
-        }
-        
-        marker.setMap(show ? map : null);
-    });
-    
-    // Update user list visibility
-    updateUserListVisibility();
-}
-
-function updateUserListVisibility() {
-    const userItems = document.querySelectorAll('.user-item');
-    const statusFilter = document.getElementById('statusFilter').value;
-    const distanceFilter = document.getElementById('distanceFilter').value;
-    
-    userItems.forEach(item => {
-        let show = true;
-        
-        // Status filter
-        if (statusFilter !== 'all') {
-            const status = item.dataset.status;
-            if (statusFilter === 'attended' && status !== 'attended') {
-                show = false;
-            } else if (statusFilter === 'pending' && status !== 'pending') {
-                show = false;
-            }
-        }
-        
-        // Distance filter
-        if (distanceFilter !== 'all' && show) {
-            const lat = parseFloat(item.dataset.lat);
-            const lng = parseFloat(item.dataset.lng);
-            const distance = calculateDistance({{ event.latitude }}, {{ event.longitude }}, lat, lng);
-            
-            if (distance > parseFloat(distanceFilter)) {
-                show = false;
-            }
-        }
-        
-        item.style.display = show ? 'block' : 'none';
-    });
-}
-
-// Add the missing filterMarkers function
-function filterMarkers() {
-    const statusFilter = document.getElementById('statusFilter').value;
-    const distanceFilter = document.getElementById('distanceFilter').value;
-    
-    markers.forEach(marker => {
-        let show = true;
-        
-        // Status filter
-        if (statusFilter !== 'all') {
-            if (statusFilter === 'attended' && marker.userData.status !== 'attended') {
-                show = false;
-            } else if (statusFilter === 'pending' && marker.userData.status !== 'pending') {
-                show = false;
-            }
-        }
-        
-        // Distance filter
-        if (distanceFilter !== 'all' && show) {
-            const distance = calculateDistance(
-                {{ event.latitude }}, {{ event.longitude }},
-                marker.getPosition().lat(), marker.getPosition().lng()
-            );
-            
-            if (distance > parseFloat(distanceFilter)) {
-                show = false;
-            }
-        }
-        
-        marker.setMap(show ? map : null);
-    });
-    
-    // Update user list visibility
-    updateUserListVisibility();
-}
-
-function calculateDistance(lat1, lon1, lat2, lon2) {
-    const R = 6371; // Radius of the Earth in km
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-              Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return R * c;
-}
-
-function changeMapView() {
-    const mapView = document.getElementById('mapView').value;
-    const mapTypeIds = {
-        'roadmap': google.maps.MapTypeId.ROADMAP,
-        'satellite': google.maps.MapTypeId.SATELLITE,
-        'hybrid': google.maps.MapTypeId.HYBRID,
-        'terrain': google.maps.MapTypeId.TERRAIN
-    };
-    
-    map.setMapTypeId(mapTypeIds[mapView]);
-}
-
-function centerOnUser(lat, lng) {
-    map.setCenter({ lat: lat, lng: lng });
-    map.setZoom(16);
-}
-
-function refreshMap() {
-    // Reload the page to get fresh data
-    window.location.reload();
-}
-
-function setupAutoRefresh() {
-    const autoRefreshCheckbox = document.getElementById('autoRefresh');
-    
-    if (autoRefreshCheckbox) {
-        autoRefreshCheckbox.addEventListener('change', function() {
-            if (this.checked) {
-                // Enable auto-refresh every 30 seconds
-                autoRefreshInterval = setInterval(() => {
-                    refreshMap();
-                }, 30000);
-            } else {
-                // Disable auto-refresh
-                if (autoRefreshInterval) {
-                    clearInterval(autoRefreshInterval);
-                    autoRefreshInterval = null;
-                }
-            }
-        });
-    }
-}
-
-function toggleAutoRefresh() {
-    // This function is called by the checkbox onchange event
-    // The logic is handled in setupAutoRefresh()
-}
-
-function toggleHeatmap() {
-    const btn = document.getElementById('heatmapBtn');
-    if (!btn) return;
-    
-    if (isHeatmapActive) {
-        // Disable heatmap
-        if (heatmap) {
-            heatmap.setMap(null);
-        }
-        isHeatmapActive = false;
-        btn.classList.remove('btn-primary');
-        btn.classList.add('btn-outline-primary');
-        btn.innerHTML = '<i class="fas fa-fire me-1"></i>Heatmap';
-    } else {
-        // Enable heatmap
-        createHeatmap();
-        isHeatmapActive = true;
-        btn.classList.remove('btn-outline-primary');
-        btn.classList.add('btn-primary');
-        btn.innerHTML = '<i class="fas fa-fire me-1"></i>Heatmap ON';
-    }
-}
-
-function toggleClustering() {
-    const btn = document.getElementById('clusteringBtn');
-    if (!btn) return;
-    
-    if (isClusteringActive) {
-        // Disable clustering
-        if (markerClusterer) {
-            markerClusterer.clearMarkers();
-        }
-        markers.forEach(marker => marker.setMap(map));
-        isClusteringActive = false;
-        btn.classList.remove('btn-success');
-        btn.classList.add('btn-outline-success');
-        btn.innerHTML = '<i class="fas fa-object-group me-1"></i>Cluster';
-    } else {
-        // Enable clustering
-        createMarkerClustering();
-        isClusteringActive = true;
-        btn.classList.remove('btn-outline-success');
-        btn.classList.add('btn-success');
-        btn.innerHTML = '<i class="fas fa-object-group me-1"></i>Cluster ON';
-    }
-}
-
-function createHeatmap() {
-    // Check if visualization library is available
-    if (typeof google === 'undefined' || typeof google.maps === 'undefined' || typeof google.maps.visualization === 'undefined') {
-        console.warn('Google Maps Visualization library not loaded, heatmap disabled');
-        showAlert('Heatmap library not loaded. Please refresh the page.', 'warning');
-        return;
-    }
-    
-    const heatmapData = [];
-    
-    {% for registration in registrations %}
-        {% if registration.latitude and registration.longitude %}
-        heatmapData.push({
-            location: new google.maps.LatLng({{ registration.latitude }}, {{ registration.longitude }}),
-            weight: 1
-        });
-        {% endif %}
-    {% endfor %}
-    
-    if (heatmapData.length > 0) {
-        try {
-            heatmap = new google.maps.visualization.HeatmapLayer({
-                data: heatmapData,
-                map: map,
-                radius: 50,
-                opacity: 0.8
-            });
-            console.log('Heatmap created successfully');
-        } catch (error) {
-            console.error('Error creating heatmap:', error);
-            showAlert('Error creating heatmap.', 'error');
-        }
-    } else {
-        showAlert('No location data available for heatmap.', 'info');
-    }
-}
-
-function createMarkerClustering() {
-    if (markerClusterer) {
-        markerClusterer.clearMarkers();
-    }
-    
-    // Check if MarkerClusterer is available
-    if (typeof MarkerClusterer === 'undefined') {
-        console.warn('MarkerClusterer library not loaded, clustering disabled');
-        showAlert('Marker clustering library not loaded. Please refresh the page.', 'warning');
-        return;
-    }
-    
-    try {
-        markerClusterer = new MarkerClusterer(map, markers, {
-            imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'
-        });
-        console.log('Marker clustering enabled');
-    } catch (error) {
-        console.error('Error creating marker clustering:', error);
-        showAlert('Error enabling marker clustering.', 'error');
-    }
-}
-
-function searchLocation() {
-    const searchQuery = document.getElementById('mapSearch').value;
-    if (searchQuery.trim() === '') return;
-    
-    if (typeof google === 'undefined' || typeof google.maps === 'undefined') {
-        showAlert('Google Maps API not loaded yet. Please wait.', 'warning');
-        return;
-    }
-    
-    const geocoder = new google.maps.Geocoder();
-    geocoder.geocode({ address: searchQuery }, (results, status) => {
-        if (status === 'OK') {
-            const location = results[0].geometry.location;
-            map.setCenter(location);
-            map.setZoom(15);
-            
-            // Add a temporary marker for the searched location
-            new google.maps.Marker({
-                position: location,
-                map: map,
-                title: `Searched: ${searchQuery}`,
-                icon: {
-                    url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png'
-                }
-            });
-        } else {
-            showAlert('Location not found. Please try a different search term.', 'warning');
-        }
-    });
-}
-
-function analyzeRegistrations() {
-    const locations = [];
-    
-    {% for registration in registrations %}
-        {% if registration.latitude and registration.longitude %}
-        locations.push({
-            lat: {{ registration.latitude }},
-            lng: {{ registration.longitude }},
-            attended: {{ 'true' if registration.attended else 'false' }}
-        });
-        {% endif %}
-    {% endfor %}
-    
-    if (locations.length === 0) return;
-    
-    // Calculate average distance
-    let totalDistance = 0;
-    let closestCount = 0;
-    
-    locations.forEach(location => {
-        const distance = calculateDistance({{ event.latitude }}, {{ event.longitude }}, location.lat, location.lng);
-        totalDistance += distance;
-        if (distance <= 5) closestCount++;
-    });
-    
-    const avgDistance = totalDistance / locations.length;
-    
-    // Update analytics
-    document.getElementById('avgDistance').textContent = avgDistance.toFixed(1);
-    document.getElementById('closestUsers').textContent = closestCount;
-    
-    // Find hotspots (areas with multiple registrations)
-    findHotspots(locations);
-}
-
-function findHotspots(locations) {
-    const gridSize = 0.01; // Roughly 1km grid
-    const grid = {};
-    
-    locations.forEach(location => {
-        const gridX = Math.floor(location.lat / gridSize);
-        const gridY = Math.floor(location.lng / gridSize);
-        const key = `${gridX},${gridY}`;
-        
-        if (!grid[key]) {
-            grid[key] = {
-                count: 0,
-                center: { lat: (gridX + 0.5) * gridSize, lng: (gridY + 0.5) * gridSize },
-                locations: []
-            };
-        }
-        
-        grid[key].count++;
-        grid[key].locations.push(location);
-    });
-    
-    // Find areas with multiple registrations
-    hotspots = Object.values(grid).filter(area => area.count > 1);
-    hotspots.sort((a, b) => b.count - a.count);
-    
-    document.getElementById('hotspotCount').textContent = hotspots.length;
-    
-    // Display top hotspots
-    displayHotspots();
-}
-
-function displayHotspots() {
-    const container = document.getElementById('hotspotList');
-    container.innerHTML = '';
-    
-    hotspots.slice(0, 6).forEach((hotspot, index) => {
-        const hotspotElement = document.createElement('div');
-        hotspotElement.className = 'col-md-4 col-lg-2';
-        hotspotElement.innerHTML = `
-            <div class="hotspot-item p-2 border rounded text-center" onclick="centerOnHotspot(${hotspot.center.lat}, ${hotspot.center.lng})">
-                <div class="hotspot-number mb-1">${index + 1}</div>
-                <div class="hotspot-count fw-bold text-primary">${hotspot.count}</div>
-                <small class="text-muted">users</small>
-            </div>
-        `;
-        container.appendChild(hotspotElement);
-    });
-}
-
-function centerOnHotspot(lat, lng) {
-    map.setCenter({ lat: lat, lng: lng });
-    map.setZoom(16);
-    
-    // Add a temporary highlight marker
-    new google.maps.Marker({
-        position: { lat: lat, lng: lng },
-        map: map,
-        title: 'Hotspot Center',
-        icon: {
-            url: 'https://maps.google.com/mapfiles/ms/icons/yellow-dot.png',
-            scaledSize: new google.maps.Size(32, 32)
-        }
-    });
-}
-
-function showHotspotDetails() {
-    if (hotspots.length === 0) {
-        alert('No hotspots found. Need more registrations with location data.');
-        return;
-    }
-    
-    let details = 'Registration Hotspots:\n\n';
-    hotspots.forEach((hotspot, index) => {
-        const distance = calculateDistance({{ event.latitude }}, {{ event.longitude }}, hotspot.center.lat, hotspot.center.lng);
-        details += `${index + 1}. ${hotspot.count} users - ${distance.toFixed(1)}km from event\n`;
-    });
-    
-    alert(details);
-}
-
-function showUserDetails(userId) {
-    // Load user details into modal
-    const modal = new bootstrap.Modal(document.getElementById('userDetailsModal'));
-    const content = document.getElementById('userDetailsContent');
-    
-    content.innerHTML = `
-        <div class="text-center">
-            <i class="fas fa-spinner fa-spin fa-2x text-primary mb-3"></i>
-            <p>Loading user details...</p>
-        </div>
-    `;
-    
-    modal.show();
-    
-    // Simulate loading user details (you can implement actual API call here)
-    setTimeout(() => {
-        content.innerHTML = `
-            <div class="row">
-                <div class="col-md-6">
-                    <h6>User Information</h6>
-                    <p><strong>User ID:</strong> ${userId}</p>
-                    <p><strong>Registration Status:</strong> <span class="badge bg-success">Active</span></p>
-                </div>
-                <div class="col-md-6">
-                    <h6>Event Details</h6>
-                    <p><strong>Event:</strong> {{ event.title }}</p>
-                    <p><strong>Registration Date:</strong> Current Date</p>
-                </div>
-            </div>
-        `;
-    }, 1000);
-}
-
-// Utility function to show alerts
-function showAlert(message, type) {
-    // Create alert element
-    const alertDiv = document.createElement('div');
-    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
-    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
-    alertDiv.innerHTML = `
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    `;
-    
-    // Insert at top of body
-    document.body.appendChild(alertDiv);
-    
-    // Auto-remove after 5 seconds
-    setTimeout(() => {
-        if (alertDiv.parentNode) {
-            alertDiv.remove();
-        }
-    }, 5000);
-}
-
-// Clean up interval when page unloads
-window.addEventListener('beforeunload', function() {
-    if (autoRefreshInterval) {
-        clearInterval(autoRefreshInterval);
-    }
+    // In a real implementation, you would:
+    // 1. Initialize Google Maps
+    // 2. Add event marker
+    // 3. Add registration markers
+    // 4. Show registration clusters
+    // 5. Implement heat maps for registration density
 });
 </script>
 {% endblock %}

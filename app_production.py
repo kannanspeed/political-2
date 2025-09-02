@@ -527,6 +527,31 @@ def user_event_detail(event_id):
     
     return render_template('user/event_detail.html', event=event, is_registered=is_registered)
 
+@app.route('/user/my-events')
+@login_required
+def user_my_events():
+    """Show all events the user is registered for"""
+    if current_user.role != 'user':
+        flash('Access denied', 'error')
+        return redirect(url_for('index'))
+    
+    user_registrations = EventRegistration.query.filter_by(user_id=current_user.id).all()
+    registered_events = []
+    
+    for registration in user_registrations:
+        event = Event.query.get(registration.event_id)
+        if event:
+            registered_events.append({
+                'event': event,
+                'registration': registration,
+                'is_past': event.event_date < datetime.utcnow()
+            })
+    
+    # Sort by event date (upcoming first)
+    registered_events.sort(key=lambda x: x['event'].event_date)
+    
+    return render_template('user/my_events.html', registered_events=registered_events)
+
 @app.route('/user/join_event/<int:event_id>', methods=['POST'])
 @login_required
 def join_event(event_id):

@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+
+{% block title %}My Registered Events - Political Events{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 mb-1">
+                <i class="fas fa-calendar-check me-2 text-success"></i>
+                My Registered Events
+            </h1>
+            <p class="text-muted mb-0">View all events you're registered for</p>
+        </div>
+        <a href="{{ url_for('user_dashboard') }}" class="btn btn-outline-primary">
+            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+        </a>
+    </div>
+
+    {% if registered_events %}
+        <div class="row">
+            {% for item in registered_events %}
+            <div class="col-lg-6 mb-4">
+                <div class="card h-100 {% if item.is_past %}border-secondary{% endif %}">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-calendar-alt me-2 text-primary"></i>
+                            {{ item.event.title }}
+                        </h5>
+                        <span class="badge bg-{{ 'secondary' if item.is_past else 'success' }}">
+                            {{ 'Past Event' if item.is_past else 'Upcoming' }}
+                        </span>
+                    </div>
+                    
+                    <div class="card-body">
+                        <p class="card-text text-muted mb-3">
+                            {{ item.event.description[:150] }}{% if item.event.description|length > 150 %}...{% endif %}
+                        </p>
+                        
+                        <div class="event-meta mb-3">
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <small class="text-muted">
+                                        <i class="fas fa-flag me-1"></i>
+                                        {{ item.event.party_name }}
+                                    </small>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted">
+                                        <i class="fas fa-calendar me-1"></i>
+                                        {{ item.event.event_date.strftime('%b %d, %Y') }}
+                                    </small>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted">
+                                        <i class="fas fa-clock me-1"></i>
+                                        {{ item.event.event_date.strftime('%I:%M %p') }}
+                                    </small>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted">
+                                        <i class="fas fa-map-marker-alt me-1"></i>
+                                        {{ item.event.location[:25] }}{% if item.event.location|length > 25 %}...{% endif %}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="registration-info mb-3">
+                            <div class="alert alert-info">
+                                <small>
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    <strong>Registration Date:</strong> {{ item.registration.registered_at.strftime('%B %d, %Y at %I:%M %p') }}
+                                </small>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex gap-2">
+                            <a href="{{ url_for('user_event_detail', event_id=item.event.id) }}" class="btn btn-primary btn-sm flex-fill">
+                                <i class="fas fa-eye me-1"></i>View Details
+                            </a>
+                            <button class="btn btn-outline-info btn-sm" onclick="getDirections({{ item.event.latitude }}, {{ item.event.longitude }}, '{{ item.event.location }}')">
+                                <i class="fas fa-directions"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="card-footer">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">
+                                <i class="fas fa-qrcode me-1"></i>
+                                QR Code Available
+                            </small>
+                            {% if item.registration.attended %}
+                                <span class="badge bg-success">
+                                    <i class="fas fa-check me-1"></i>Attended
+                                </span>
+                            {% else %}
+                                <span class="badge bg-warning">
+                                    <i class="fas fa-clock me-1"></i>Pending
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Summary Stats -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-pie me-2 text-info"></i>
+                    Event Summary
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-4">
+                        <h3 class="text-primary">{{ registered_events|length }}</h3>
+                        <p class="text-muted">Total Events</p>
+                    </div>
+                    <div class="col-md-4">
+                        <h3 class="text-success">{{ registered_events|selectattr('is_past', 'equalto', false)|list|length }}</h3>
+                        <p class="text-muted">Upcoming Events</p>
+                    </div>
+                    <div class="col-md-4">
+                        <h3 class="text-secondary">{{ registered_events|selectattr('is_past', 'equalto', true)|list|length }}</h3>
+                        <p class="text-muted">Past Events</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    {% else %}
+        <div class="text-center py-5">
+            <div class="empty-state mb-4">
+                <i class="fas fa-calendar-times fa-4x text-muted mb-3"></i>
+                <h4 class="text-muted">No Events Registered</h4>
+                <p class="text-muted mb-4">You haven't registered for any events yet</p>
+                <a href="{{ url_for('user_dashboard') }}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-search me-2"></i>Browse Available Events
+                </a>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function getDirections(latitude, longitude, location) {
+    // Open Google Maps with directions
+    const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}&destination_place_id=${encodeURIComponent(location)}`;
+    window.open(mapsUrl, '_blank');
+}
+</script>
+{% endblock %}
