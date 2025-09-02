@@ -19,7 +19,7 @@
     </div>
 
     <div class="row">
-        <!-- Event Details -->
+    <!-- Event Details -->
         <div class="col-lg-8">
             <div class="card mb-4">
                 <div class="card-header">
@@ -35,13 +35,13 @@
                             <p><strong>Organized by:</strong></p>
                             <p class="text-muted">
                                 <i class="fas fa-flag me-1"></i>
-                                {{ event.party_name }}
-                            </p>
+                                    {{ event.party_name }}
+                                </p>
                             <p><strong>Location:</strong></p>
                             <p class="text-muted">
                                 <i class="fas fa-map-marker-alt me-1"></i>
-                                {{ event.location }}
-                            </p>
+                                    {{ event.location }}
+                                </p>
                             <p><strong>Date & Time:</strong></p>
                             <p class="text-muted">
                                 <i class="fas fa-clock me-1"></i>
@@ -63,8 +63,8 @@
                 <div class="card-body">
                     <div id="eventMap" style="height: 400px; border-radius: 8px; background-color: #f8f9fa;">
                         <!-- Map will be loaded here -->
-                    </div>
-                    
+        </div>
+
                     <div class="mt-3">
                         <div class="row g-3">
                             <div class="col-md-6">
@@ -75,7 +75,7 @@
                                         <br>
                                         <small class="text-muted">{{ event.location }}</small>
                                     </div>
-                                </div>
+                </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="d-flex align-items-center">
@@ -85,7 +85,7 @@
                                         <br>
                                         <small class="text-muted">{{ "%.6f"|format(event.latitude) }}, {{ "%.6f"|format(event.longitude) }}</small>
                                     </div>
-                                </div>
+                        </div>
                             </div>
                         </div>
                     </div>
@@ -157,10 +157,10 @@
                             You can view your registration details in your dashboard
                         </small>
                     {% else %}
-                        <form method="POST" action="{{ url_for('join_event', event_id=event.id) }}">
+                        <form method="POST" action="{{ url_for('join_event', event_id=event.id) }}" id="registrationForm">
                             <input type="hidden" name="latitude" value="0" id="latitude">
                             <input type="hidden" name="longitude" value="0" id="longitude">
-                            <button type="submit" class="btn btn-primary w-100" onclick="getLocation()">
+                            <button type="button" class="btn btn-primary w-100" onclick="registerWithLocation()">
                                 <i class="fas fa-plus me-2"></i>Join Event
                             </button>
                         </form>
@@ -226,15 +226,15 @@ function initializeEventMap() {
                         stylers: [{ visibility: 'off' }]
                     }
                 ]
-            });
-            
-            // Add event marker
+    });
+    
+    // Add event marker
             eventMarker = new google.maps.Marker({
                 position: { lat: eventLat, lng: eventLng },
                 map: eventMap,
-                title: '{{ event.title }}',
-                icon: {
-                    url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png'
+        title: '{{ event.title }}',
+        icon: {
+            url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png'
                 },
                 animation: google.maps.Animation.DROP
             });
@@ -260,6 +260,55 @@ function initializeEventMap() {
     }
 }
 
+function registerWithLocation() {
+    // Show loading state
+    const button = event.target;
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Getting Location...';
+    button.disabled = true;
+    
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            function(position) {
+                // Successfully got location
+                document.getElementById('latitude').value = position.coords.latitude;
+                document.getElementById('longitude').value = position.coords.longitude;
+                
+                // Show success message
+                button.innerHTML = '<i class="fas fa-check me-2"></i>Location Captured!';
+                button.className = 'btn btn-success w-100';
+                
+                // Submit form after short delay
+                setTimeout(() => {
+                    document.getElementById('registrationForm').submit();
+                }, 1000);
+            },
+            function(error) {
+                // Location access denied or error
+                console.log('Error getting location:', error);
+                button.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>Location Access Denied';
+                button.className = 'btn btn-warning w-100';
+                button.disabled = false;
+                
+                // Show error message
+                alert('Location access is required to register for this event. Please enable location access and try again.');
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 60000
+            }
+        );
+    } else {
+        // Geolocation not supported
+        console.log('Geolocation is not supported by this browser');
+        button.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>Location Not Supported';
+        button.className = 'btn btn-warning w-100';
+        button.disabled = false;
+        alert('Location services are not supported by your browser. Please use a different browser or device.');
+    }
+}
+
 function getLocation() {
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
@@ -274,7 +323,7 @@ function getLocation() {
                 document.getElementById('longitude').value = 0;
             }
         );
-    } else {
+        } else {
         console.log('Geolocation is not supported by this browser');
         document.getElementById('latitude').value = 0;
         document.getElementById('longitude').value = 0;

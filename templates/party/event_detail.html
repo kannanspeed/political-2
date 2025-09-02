@@ -76,6 +76,22 @@
                         <p><strong>Created:</strong></p>
                         <small class="text-muted">{{ event.created_at.strftime('%B %d, %Y') }}</small>
                     </div>
+                    
+                    <div class="mt-3">
+                        <p><strong>With Location:</strong></p>
+                        <span class="badge bg-info fs-6">
+                            {{ registrations|selectattr('latitude', 'defined')|selectattr('longitude', 'defined')|list|length }}
+                        </span>
+                    </div>
+                    
+                    <div class="mt-3 d-grid gap-2">
+                        <button class="btn btn-primary btn-sm" onclick="showAllUsersMap()">
+                            <i class="fas fa-map me-2"></i>View Live Map
+                        </button>
+                        <button class="btn btn-outline-info btn-sm" onclick="showRegistrationStats()">
+                            <i class="fas fa-chart-bar me-2"></i>View Stats
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -166,6 +182,44 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- All Users Map Modal -->
+<div class="modal fade" id="allUsersMapModal" tabindex="-1" aria-labelledby="allUsersMapModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="allUsersMapModalLabel">
+                    <i class="fas fa-map me-2 text-primary"></i>
+                    All Registered Users - Live Map
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>{{ registrations|length }}</strong> total registrations, 
+                            <strong>{{ registrations|selectattr('latitude', 'defined')|selectattr('longitude', 'defined')|list|length }}</strong> with location data
+                        </div>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <button class="btn btn-outline-primary btn-sm" onclick="toggleMapView()">
+                            <i class="fas fa-layer-group me-1"></i>Toggle View
+                        </button>
+                    </div>
+                </div>
+                <div id="allUsersMap" style="height: 500px; width: 100%; border-radius: 8px;"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="exportUserLocations()">
+                    <i class="fas fa-download me-2"></i>Export Data
+                </button>
             </div>
         </div>
     </div>
@@ -266,6 +320,159 @@ function refreshRegistrations() {
     window.location.reload();
 }
 
+function showAllUsersMap() {
+    const modal = new bootstrap.Modal(document.getElementById('allUsersMapModal'));
+    modal.show();
+    
+    // Initialize all users map
+    setTimeout(() => {
+        initializeAllUsersMap();
+    }, 500);
+}
+
+function initializeAllUsersMap() {
+    const mapElement = document.getElementById('allUsersMap');
+    if (!mapElement) return;
+    
+    // Get event coordinates
+    const eventLat = {{ event.latitude }};
+    const eventLng = {{ event.longitude }};
+    
+    // Get all user locations
+    const userLocations = [];
+    {% for registration in registrations %}
+        {% if registration.latitude and registration.longitude %}
+        userLocations.push({
+            lat: {{ registration.latitude }},
+            lng: {{ registration.longitude }},
+            email: '{{ registration.user.email }}',
+            registeredAt: '{{ registration.registered_at.strftime("%b %d, %Y %H:%M") }}'
+        });
+        {% endif %}
+    {% endfor %}
+    
+    if (userLocations.length === 0) {
+        mapElement.innerHTML = '<div class="text-center py-5"><i class="fas fa-map-marker-alt fa-3x text-muted mb-3"></i><p class="text-muted">No user locations available</p></div>';
+        return;
+    }
+    
+    // Create map centered on event location
+    const map = new google.maps.Map(mapElement, {
+        zoom: 12,
+        center: { lat: eventLat, lng: eventLng },
+        mapTypeId: google.maps.MapTypeId.ROADMAP,
+        styles: [
+            {
+                featureType: 'poi',
+                elementType: 'labels',
+                stylers: [{ visibility: 'off' }]
+            }
+        ]
+    });
+    
+    // Add event marker (red)
+    new google.maps.Marker({
+        position: { lat: eventLat, lng: eventLng },
+        map: map,
+        title: 'Event Location: {{ event.title }}',
+        icon: {
+            url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png'
+        },
+        animation: google.maps.Animation.DROP
+    });
+    
+    // Add user location markers (blue)
+    userLocations.forEach((user, index) => {
+        const marker = new google.maps.Marker({
+            position: { lat: user.lat, lng: user.lng },
+            map: map,
+            title: `User: ${user.email}`,
+            icon: {
+                url: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png'
+            },
+            animation: google.maps.Animation.DROP
+        });
+        
+        // Add info window for each user
+        const infoWindow = new google.maps.InfoWindow({
+            content: `
+                <div style="text-align: center; padding: 10px;">
+                    <h6 style="margin: 0 0 5px 0; color: #0d6efd;">${user.email}</h6>
+                    <p style="margin: 0; font-size: 12px; color: #6c757d;">Registered: ${user.registeredAt}</p>
+                    <small style="color: #6c757d;">${user.lat.toFixed(6)}, ${user.lng.toFixed(6)}</small>
+                </div>
+            `
+        });
+        
+        marker.addListener('click', () => {
+            infoWindow.open(map, marker);
+        });
+    });
+    
+    // Fit map to show all markers
+    const bounds = new google.maps.LatLngBounds();
+    bounds.extend({ lat: eventLat, lng: eventLng });
+    userLocations.forEach(user => {
+        bounds.extend({ lat: user.lat, lng: user.lng });
+    });
+    map.fitBounds(bounds);
+}
+
+function toggleMapView() {
+    // Toggle between different map views (roadmap, satellite, etc.)
+    const mapElement = document.getElementById('allUsersMap');
+    if (mapElement && window.currentMap) {
+        const currentMapType = window.currentMap.getMapTypeId();
+        const newMapType = currentMapType === google.maps.MapTypeId.ROADMAP ? 
+            google.maps.MapTypeId.SATELLITE : google.maps.MapTypeId.ROADMAP;
+        window.currentMap.setMapTypeId(newMapType);
+    }
+}
+
+function exportUserLocations() {
+    // Export user location data as CSV
+    const userLocations = [];
+    {% for registration in registrations %}
+        {% if registration.latitude and registration.longitude %}
+        userLocations.push({
+            email: '{{ registration.user.email }}',
+            phone: '{{ registration.user.phone or "N/A" }}',
+            latitude: {{ registration.latitude }},
+            longitude: {{ registration.longitude }},
+            registeredAt: '{{ registration.registered_at.strftime("%Y-%m-%d %H:%M:%S") }}'
+        });
+        {% endif %}
+    {% endfor %}
+    
+    if (userLocations.length === 0) {
+        alert('No location data to export');
+        return;
+    }
+    
+    // Create CSV content
+    const csvContent = [
+        ['Email', 'Phone', 'Latitude', 'Longitude', 'Registration Date'],
+        ...userLocations.map(user => [
+            user.email,
+            user.phone,
+            user.latitude,
+            user.longitude,
+            user.registeredAt
+        ])
+    ].map(row => row.join(',')).join('\n');
+    
+    // Download CSV file
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'user_locations_{{ event.title|replace(" ", "_") }}.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+}
+
 function showUserLocation(lat, lng) {
     const modal = new bootstrap.Modal(document.getElementById('locationModal'));
     modal.show();
@@ -341,6 +548,64 @@ function showRegistrationStats() {
     const withLocation = {{ registrations|selectattr('latitude', 'defined')|selectattr('longitude', 'defined')|list|length }};
     const attended = {{ registrations|selectattr('attended', 'equalto', true)|list|length }};
     const pending = {{ registrations|selectattr('attended', 'equalto', false)|list|length }};
+    
+    // Create stats modal content
+    const statsContent = `
+        <div class="row text-center">
+            <div class="col-md-3">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <h3>${totalRegistrations}</h3>
+                        <p class="mb-0">Total</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <h3>${withLocation}</h3>
+                        <p class="mb-0">With Location</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-warning text-white">
+                    <div class="card-body">
+                        <h3>${attended}</h3>
+                        <p class="mb-0">Attended</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-info text-white">
+                    <div class="card-body">
+                        <h3>${pending}</h3>
+                        <p class="mb-0">Pending</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-4">
+            <h6>Location Analytics:</h6>
+            <div class="alert alert-info">
+                <i class="fas fa-map-marker-alt me-2"></i>
+                <strong>${withLocation}</strong> out of <strong>${totalRegistrations}</strong> users have provided location data.
+                ${withLocation > 0 ? 'Click "View Live Map" to see their locations on the map.' : 'No location data available yet.'}
+            </div>
+        </div>
+    `;
+    
+    // Show stats in modal
+    const modal = new bootstrap.Modal(document.getElementById('userDetailsModal'));
+    const content = document.getElementById('userDetailsContent');
+    content.innerHTML = statsContent;
+    
+    // Update modal title
+    document.getElementById('userDetailsModalLabel').innerHTML = '<i class="fas fa-chart-bar me-2 text-info"></i>Registration Statistics';
+    
+    modal.show();
+}
     
     // Calculate distance statistics if we have location data
     let distanceStats = '';

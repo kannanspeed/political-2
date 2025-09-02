@@ -11,7 +11,7 @@
                 <i class="fas fa-map-marked-alt me-2 text-success"></i>
                 Event Map: {{ event.title }}
             </h1>
-            <p class="text-muted mb-0">View event location and registrations on map</p>
+            <p class="text-muted mb-0">View all registered users and registration hotspots</p>
         </div>
         <div class="d-flex gap-2">
             <a href="{{ url_for('party_event_detail', event_id=event.id) }}" class="btn btn-outline-primary">
@@ -24,146 +24,121 @@
     </div>
 
     <div class="row">
-        <!-- Map Section -->
+        <!-- Main Map Section -->
         <div class="col-lg-8">
             <div class="card">
                 <div class="card-header">
                     <h5 class="mb-0">
                         <i class="fas fa-map me-2 text-success"></i>
-                        Event Location & Registrations
+                        User Locations & Registration Hotspots
                     </h5>
                 </div>
                 <div class="card-body">
-                    <div id="eventMap" style="height: 500px; border-radius: 8px; background-color: #f8f9fa;">
+                    <!-- Map Container -->
+                    <div id="eventMap" style="height: 600px; border-radius: 8px; background-color: #f8f9fa;">
                         <div class="text-center py-5">
-                            <i class="fas fa-map fa-3x text-muted mb-3"></i>
-                            <p class="text-muted">Map will be displayed here</p>
-                            <small class="text-muted">Google Maps integration would be implemented here</small>
-        </div>
-    </div>
-
-                    <div class="mt-3">
-                    <div class="row g-3">
-                            <div class="col-md-6">
-                                <div class="d-flex align-items-center">
-                                    <i class="fas fa-map-marker-alt text-danger me-2"></i>
-                                    <div>
-                                        <strong>Event Location</strong>
-                                        <br>
-                                        <small class="text-muted">{{ event.location }}</small>
-                            </div>
-                        </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="d-flex align-items-center">
-                                    <i class="fas fa-coordinates text-primary me-2"></i>
-                                    <div>
-                                        <strong>Coordinates</strong>
-                                        <br>
-                                        <small class="text-muted">{{ "%.6f"|format(event.latitude) }}, {{ "%.6f"|format(event.longitude) }}</small>
+                            <i class="fas fa-spinner fa-spin fa-3x text-primary mb-3"></i>
+                            <p class="text-muted">Loading Google Maps...</p>
                         </div>
                     </div>
-                            </div>
-                        </div>
+                    
+                    <!-- Map Controls -->
+                    <div class="mt-3 d-flex gap-2 flex-wrap">
+                        <button class="btn btn-outline-primary btn-sm" onclick="toggleMapView()">
+                            <i class="fas fa-layer-group me-1"></i>Toggle View
+                        </button>
+                        <button class="btn btn-outline-success btn-sm" onclick="showAllUsers()">
+                            <i class="fas fa-users me-1"></i>Show All Users
+                        </button>
+                        <button class="btn btn-outline-info btn-sm" onclick="showHotspots()">
+                            <i class="fas fa-fire me-1"></i>Show Hotspots
+                                </button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Registration Stats -->
+        <!-- Sidebar - User List & Stats -->
         <div class="col-lg-4">
+            <!-- Registration Summary -->
             <div class="card mb-4">
                 <div class="card-header">
                     <h5 class="mb-0">
                         <i class="fas fa-chart-pie me-2 text-info"></i>
-                        Registration Statistics
+                        Registration Summary
                     </h5>
                 </div>
                 <div class="card-body">
-                    <div class="text-center mb-4">
-                        <h2 class="text-primary mb-0">{{ registrations|length }}</h2>
-                        <p class="text-muted">Total Registrations</p>
-                        </div>
-                    
-                    <div class="row g-3 mb-4">
+                    <div class="row text-center">
                         <div class="col-6">
-                            <div class="text-center">
-                                <h5 class="text-success mb-0">
-                                {{ registrations|selectattr('attended', 'equalto', true)|list|length }}
-                                </h5>
-                                <small class="text-muted">Attended</small>
-                            </div>
+                            <h3 class="text-primary mb-0">{{ registrations|length }}</h3>
+                            <small class="text-muted">Total Users</small>
                         </div>
                         <div class="col-6">
-                            <div class="text-center">
-                                <h5 class="text-warning mb-0">
-                                {{ registrations|selectattr('attended', 'equalto', false)|list|length }}
-                                </h5>
-                                <small class="text-muted">Registered</small>
-                        </div>
+                            <h3 class="text-success mb-0">
+                                {{ registrations|selectattr('latitude', 'defined')|selectattr('longitude', 'defined')|list|length }}
+                            </h3>
+                            <small class="text-muted">With Location</small>
                         </div>
                     </div>
-                    
-                    <div class="progress mb-3" style="height: 8px;">
-                        {% set attended_count = registrations|selectattr('attended', 'equalto', true)|list|length %}
-                        {% set total_count = registrations|length %}
-                        {% if total_count > 0 %}
-                            {% set attendance_rate = (attended_count / total_count * 100)|round %}
-                        {% else %}
-                            {% set attendance_rate = 0 %}
-                        {% endif %}
-                        <div class="progress-bar bg-success" role="progressbar" style="width: {{ attendance_rate }}%"></div>
-                    </div>
-                    <small class="text-muted">Attendance Rate: {{ attendance_rate }}%</small>
                 </div>
             </div>
 
-            <!-- Location Distribution -->
+            <!-- User Locations List -->
             <div class="card">
                 <div class="card-header">
                     <h5 class="mb-0">
-                        <i class="fas fa-users me-2 text-warning"></i>
-                        Location Distribution
+                        <i class="fas fa-map-marker-alt me-2 text-warning"></i>
+                        User Locations
                     </h5>
                 </div>
                 <div class="card-body">
                         {% if registrations %}
-                        <div class="mb-3">
-                            <h6>Registrations by Area</h6>
-                            <small class="text-muted">Users registered from different locations</small>
-                        </div>
-                        
-                        {% for registration in registrations[:5] %}
-                        <div class="d-flex align-items-center mb-2">
-                            <div class="avatar-sm me-2">
-                                <i class="fas fa-user-circle fa-lg text-primary"></i>
-                            </div>
-                            <div class="flex-grow-1">
-                                <small class="d-block">
+                        <div class="user-locations-list">
+                            {% for registration in registrations %}
+                                {% if registration.latitude and registration.longitude and registration.latitude != 0 and registration.longitude != 0 %}
+                                    <div class="user-location-item mb-3 p-3 border rounded" 
+                                         onclick="focusOnUser({{ registration.latitude }}, {{ registration.longitude }}, '{{ registration.user.email if registration.user else 'User #' + registration.user_id|string }}')">
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-sm me-3">
+                                                <i class="fas fa-user-circle fa-2x text-primary"></i>
+                                            </div>
+                                            <div class="flex-grow-1">
+                                                <h6 class="mb-1">
                                                 {% if registration.user %}
                                                     {{ registration.user.email }}
                                                 {% else %}
-                                        User #{{ registration.user_id }}
+                                                        User #{{ registration.user_id }}
                                                 {% endif %}
+                                                </h6>
+                                                <small class="text-muted">
+                                                    {{ "%.4f"|format(registration.latitude) }}, {{ "%.4f"|format(registration.longitude) }}
+                                                </small>
+                                                <br>
+                                                <small class="text-muted">
+                                                    Registered: {{ registration.registered_at.strftime('%b %d, %Y') }}
                                             </small>
-                                <small class="text-muted">
-                                    {{ "%.4f"|format(registration.latitude) }}, {{ "%.4f"|format(registration.longitude) }}
-                                </small>
+                                        </div>
+                                            <div class="ms-2">
+                                                <i class="fas fa-map-marker-alt text-primary"></i>
+                                            </div>
                                     </div>
                                 </div>
+                                {% endif %}
                             {% endfor %}
+                        </div>
                         
-                        {% if registrations|length > 5 %}
-                            <div class="text-center mt-2">
-                                <small class="text-muted">
-                                    +{{ registrations|length - 5 }} more registrations
-                                </small>
+                        {% if not registrations|selectattr('latitude', 'defined')|selectattr('longitude', 'defined')|list %}
+                            <div class="text-center py-4">
+                                <i class="fas fa-map-marker-alt fa-3x text-muted mb-3"></i>
+                                <p class="text-muted">No user locations available</p>
+                                <small class="text-muted">Users need to provide location during registration</small>
                             </div>
                         {% endif %}
                     {% else %}
-                        <div class="text-center py-3">
-                            <i class="fas fa-users fa-2x text-muted mb-2"></i>
-                            <p class="text-muted mb-0">No registrations yet</p>
+                        <div class="text-center py-4">
+                            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No registrations yet</p>
                     </div>
                     {% endif %}
                 </div>
@@ -171,30 +146,481 @@
         </div>
     </div>
 </div>
+
+<!-- Map Legend Modal -->
+<div class="modal fade" id="mapLegendModal" tabindex="-1" aria-labelledby="mapLegendModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="mapLegendModalLabel">
+                    <i class="fas fa-info-circle me-2 text-info"></i>
+                    Map Legend
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-6">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="fas fa-map-marker-alt fa-2x text-danger me-3"></i>
+                            <div>
+                                <strong>Event Location</strong><br>
+                                <small class="text-muted">Where the event is happening</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="fas fa-map-marker-alt fa-2x text-primary me-3"></i>
+                            <div>
+                                <strong>User Locations</strong><br>
+                                <small class="text-muted">Where users are registered from</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-6">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="fas fa-fire fa-2x text-warning me-3"></i>
+                            <div>
+                                <strong>Hotspots</strong><br>
+                                <small class="text-muted">Areas with many registrations</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="fas fa-eye fa-2x text-info me-3"></i>
+                            <div>
+                                <strong>Click to Focus</strong><br>
+                                <small class="text-muted">Click user in sidebar to focus map</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
+<!-- Google Maps API -->
+<script src="https://maps.googleapis.com/maps/api/js?key={{ config.GOOGLE_MAPS_API_KEY }}&libraries=places"></script>
+
 <script>
-// This would contain Google Maps integration code
-// For now, it's a placeholder showing the structure
+let eventMap, eventMarker;
+let userMarkers = [];
+let infoWindows = [];
+let currentFocus = null;
 
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Event Map loaded for event: {{ event.title }}');
-    console.log('Event coordinates: {{ event.latitude }}, {{ event.longitude }}');
-    console.log('Total registrations: {{ registrations|length }}');
-    
-    // In a real implementation, you would:
-    // 1. Initialize Google Maps
-    // 2. Add event marker
-    // 3. Add registration markers
-    // 4. Show registration clusters
-    // 5. Implement heat maps for registration density
+    initializeMap();
 });
+
+function initializeMap() {
+    const eventLat = {{ event.latitude }};
+    const eventLng = {{ event.longitude }};
+    
+    if (!eventLat || !eventLng) {
+        showError('Event coordinates not available');
+        return;
+    }
+    
+    const mapElement = document.getElementById('eventMap');
+    if (!mapElement) {
+        showError('Map container not found');
+        return;
+    }
+    
+    try {
+        // Create Google Map
+        eventMap = new google.maps.Map(mapElement, {
+            center: { lat: eventLat, lng: eventLng },
+            zoom: 12,
+            mapTypeId: google.maps.MapTypeId.ROADMAP,
+            styles: [
+                {
+                    featureType: 'poi',
+                    elementType: 'labels',
+                    stylers: [{ visibility: 'off' }]
+                }
+            ]
+        });
+        
+        // Add event marker (red)
+        eventMarker = new google.maps.Marker({
+            position: { lat: eventLat, lng: eventLng },
+            map: eventMap,
+            title: 'Event: {{ event.title }}',
+            icon: {
+                url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png'
+            },
+            animation: google.maps.Animation.DROP
+        });
+        
+        // Add event info window
+        const eventInfoWindow = new google.maps.InfoWindow({
+            content: `
+                <div style="text-align: center; padding: 10px;">
+                    <h6 style="margin: 0 0 5px 0; color: #dc3545;">{{ event.title }}</h6>
+                    <p style="margin: 0; font-size: 12px; color: #6c757d;">{{ event.location }}</p>
+                    <small style="color: #6c757d;">{{ event.event_date.strftime('%B %d, %Y at %I:%M %p') }}</small>
+                </div>
+            `
+        });
+        
+        eventMarker.addListener('click', () => {
+            eventInfoWindow.open(eventMap, eventMarker);
+        });
+        
+        // Show event info by default
+        eventInfoWindow.open(eventMap, eventMarker);
+        
+        // Load user locations
+        loadUserLocations();
+        
+        console.log('Map initialized successfully');
+        
+    } catch (error) {
+        console.error('Error initializing map:', error);
+        showError('Failed to initialize Google Maps');
+    }
+}
+
+function loadUserLocations() {
+    const registrations = {{ registrations|tojson }};
+    const validLocations = [];
+    
+    // Filter valid coordinates
+    registrations.forEach(registration => {
+        if (registration.latitude && registration.longitude && 
+            registration.latitude !== 0 && registration.longitude !== 0) {
+            validLocations.push({
+                lat: parseFloat(registration.latitude),
+                lng: parseFloat(registration.longitude),
+                email: registration.user_email || 'Unknown User',
+                registeredAt: registration.registered_at || 'Unknown Date',
+                attended: registration.attended || false
+            });
+        }
+    });
+    
+    if (validLocations.length === 0) {
+        showMessage('No user locations available');
+        return;
+    }
+    
+    // Clear existing markers
+    clearUserMarkers();
+    
+    // Add user markers (blue)
+    userMarkers = validLocations.map((user, index) => {
+        const marker = new google.maps.Marker({
+            position: { lat: user.lat, lng: user.lng },
+            map: eventMap,
+            title: `User: ${user.email}`,
+                icon: {
+                url: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png'
+            },
+            animation: google.maps.Animation.DROP
+        });
+        
+        // Create info window
+        const infoWindow = new google.maps.InfoWindow({
+                content: `
+                <div style="text-align: center; padding: 10px;">
+                    <h6 style="margin: 0 0 5px 0; color: #0d6efd;">${user.email}</h6>
+                    <p style="margin: 0; font-size: 12px; color: #6c757d;">Registered: ${user.registeredAt}</p>
+                    <p style="margin: 0; font-size: 12px; color: ${user.attended ? '#28a745' : '#ffc107'};">
+                        Status: ${user.attended ? 'Attended' : 'Registered'}
+                    </p>
+                    <small style="color: #6c757d;">${user.lat.toFixed(6)}, ${user.lng.toFixed(6)}</small>
+                    </div>
+                `
+            });
+            
+        infoWindows.push(infoWindow);
+        
+        // Add click listener
+        marker.addListener('click', () => {
+            closeAllInfoWindows();
+            infoWindow.open(eventMap, marker);
+        });
+        
+        return marker;
+    });
+    
+    // Fit map to show all markers
+    fitMapToMarkers();
+    
+    showMessage(`${validLocations.length} user locations loaded`);
+}
+
+function clearUserMarkers() {
+    userMarkers.forEach(marker => marker.setMap(null));
+    infoWindows.forEach(infoWindow => infoWindow.close());
+    userMarkers = [];
+    infoWindows = [];
+}
+
+function closeAllInfoWindows() {
+    infoWindows.forEach(infoWindow => infoWindow.close());
+}
+
+function fitMapToMarkers() {
+    if (!eventMap || userMarkers.length === 0) return;
+    
+    const bounds = new google.maps.LatLngBounds();
+    
+    // Add event location
+    bounds.extend({ lat: {{ event.latitude }}, lng: {{ event.longitude }} });
+    
+    // Add all user locations
+    userMarkers.forEach(marker => {
+        bounds.extend(marker.getPosition());
+    });
+    
+    // Fit map to show all markers
+    eventMap.fitBounds(bounds);
+    
+    // Add some padding
+    eventMap.setZoom(Math.min(eventMap.getZoom(), 15));
+}
+
+function focusOnUser(lat, lng, userEmail) {
+    if (!eventMap) return;
+    
+    // Close any open info windows
+    closeAllInfoWindows();
+    
+    // Pan to user location
+    eventMap.panTo({ lat: lat, lng: lng });
+    eventMap.setZoom(16);
+    
+    // Find and highlight the user's marker
+    const userMarker = userMarkers.find(marker => 
+        marker.getPosition().lat() === lat && marker.getPosition().lng() === lng
+    );
+    
+    if (userMarker) {
+        // Bounce the marker
+        userMarker.setAnimation(google.maps.Animation.BOUNCE);
+        
+        // Stop bouncing after 2 seconds
+        setTimeout(() => {
+            userMarker.setAnimation(null);
+        }, 2000);
+        
+        // Show info window
+        const infoWindow = infoWindows[userMarkers.indexOf(userMarker)];
+        if (infoWindow) {
+            infoWindow.open(eventMap, userMarker);
+        }
+    }
+    
+    // Highlight the user in the sidebar
+    highlightUserInSidebar(lat, lng);
+}
+
+function highlightUserInSidebar(lat, lng) {
+    // Remove previous highlights
+    document.querySelectorAll('.user-location-item').forEach(item => {
+        item.classList.remove('border-primary', 'bg-light');
+    });
+    
+    // Find and highlight current user
+    const userItems = document.querySelectorAll('.user-location-item');
+    userItems.forEach(item => {
+        const itemLat = parseFloat(item.getAttribute('onclick').match(/focusOnUser\(([^,]+),/)[1]);
+        const itemLng = parseFloat(item.getAttribute('onclick').match(/,([^,]+),/)[1]);
+        
+        if (itemLat === lat && itemLng === lng) {
+            item.classList.add('border-primary', 'bg-light');
+            item.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    });
+}
+
+function toggleMapView() {
+    if (!eventMap) return;
+    
+    const currentMapType = eventMap.getMapTypeId();
+    const newMapType = currentMapType === google.maps.MapTypeId.ROADMAP ? 
+        google.maps.MapTypeId.SATELLITE : google.maps.MapTypeId.ROADMAP;
+    
+    eventMap.setMapTypeId(newMapType);
+    
+    // Update button text
+    const button = event.target;
+    const icon = button.querySelector('i');
+    if (newMapType === google.maps.MapTypeId.SATELLITE) {
+        icon.className = 'fas fa-map me-1';
+        button.innerHTML = '<i class="fas fa-map me-1"></i>Road View';
+    } else {
+        icon.className = 'fas fa-layer-group me-1';
+        button.innerHTML = '<i class="fas fa-layer-group me-1"></i>Toggle View';
+    }
+}
+
+function showAllUsers() {
+    if (!eventMap) return;
+    
+    // Reset to show all users
+    currentFocus = null;
+    fitMapToMarkers();
+    showMessage('Showing all user locations');
+}
+
+function showHotspots() {
+    if (!eventMap || userMarkers.length === 0) {
+        showMessage('No user locations to analyze');
+        return;
+    }
+    
+    // Simple hotspot detection - group nearby users
+    const hotspots = detectHotspots();
+    
+    if (hotspots.length === 0) {
+        showMessage('No clear hotspots detected');
+        return;
+    }
+    
+    // Show hotspots on map
+    showHotspotsOnMap(hotspots);
+    showMessage(`Found ${hotspots.length} registration hotspots`);
+}
+
+function detectHotspots() {
+    const locations = userMarkers.map(marker => ({
+        lat: marker.getPosition().lat(),
+        lng: marker.getPosition().lng()
+    }));
+    
+    const hotspots = [];
+    const radius = 0.01; // About 1km
+    
+    locations.forEach((location, index) => {
+        let nearbyCount = 0;
+        
+        locations.forEach((otherLocation, otherIndex) => {
+            if (index !== otherIndex) {
+                const distance = Math.sqrt(
+                    Math.pow(location.lat - otherLocation.lat, 2) +
+                    Math.pow(location.lng - otherLocation.lng, 2)
+                );
+                
+                if (distance < radius) {
+                    nearbyCount++;
+                }
+            }
+        });
+        
+        if (nearbyCount >= 1) { // At least 2 users in area
+            hotspots.push({
+                lat: location.lat,
+                lng: location.lng,
+                count: nearbyCount + 1
+            });
+        }
+    });
+    
+    return hotspots;
+}
+
+function showHotspotsOnMap(hotspots) {
+    // Clear existing markers
+    clearUserMarkers();
+    
+    // Add hotspot markers (larger, different color)
+    hotspots.forEach(hotspot => {
+        const marker = new google.maps.Marker({
+            position: { lat: hotspot.lat, lng: hotspot.lng },
+            map: eventMap,
+            title: `Hotspot: ${hotspot.count} users`,
+            icon: {
+                url: 'https://maps.google.com/mapfiles/ms/icons/orange-dot.png'
+            },
+            animation: google.maps.Animation.DROP
+        });
+        
+        const infoWindow = new google.maps.InfoWindow({
+            content: `
+                <div style="text-align: center; padding: 10px;">
+                    <h6 style="margin: 0 0 5px 0; color: #fd7e14;">Registration Hotspot</h6>
+                    <p style="margin: 0; font-size: 14px; color: #6c757d;">
+                        <strong>${hotspot.count}</strong> users registered from this area
+                    </p>
+                    <small style="color: #6c757d;">${hotspot.lat.toFixed(6)}, ${hotspot.lng.toFixed(6)}</small>
+                </div>
+            `
+        });
+        
+        userMarkers.push(marker);
+        infoWindows.push(infoWindow);
+        
+        marker.addListener('click', () => {
+            closeAllInfoWindows();
+            infoWindow.open(eventMap, marker);
+        });
+    });
+    
+    // Fit map to show hotspots
+    fitMapToMarkers();
+}
+
+function showMessage(message) {
+    console.log(message);
+    // You can add a toast notification here if needed
+}
+
+function showError(error) {
+    console.error(error);
+    const mapElement = document.getElementById('eventMap');
+    if (mapElement) {
+        mapElement.innerHTML = `
+            <div class="text-center py-5">
+                <i class="fas fa-exclamation-triangle fa-3x text-danger mb-3"></i>
+                <p class="text-danger">${error}</p>
+                <button class="btn btn-primary btn-sm" onclick="location.reload()">Retry</button>
+            </div>
+        `;
+    }
+}
 </script>
 {% endblock %}
 
 {% block extra_css %}
 <style>
+.user-location-item {
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.user-location-item:hover {
+    background-color: #f8f9fa;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.user-location-item.border-primary {
+    border-color: #0d6efd !important;
+    background-color: #f8f9fa !important;
+}
+
+.avatar-sm {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .card {
     border: none;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
@@ -207,79 +633,13 @@ document.addEventListener('DOMContentLoaded', function() {
     border-radius: 12px 12px 0 0 !important;
 }
 
-.user-item {
-    transition: all 0.3s ease;
-    cursor: pointer;
-}
-
-.user-item:hover {
-    background-color: #f8f9fa;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-}
-
-.badge {
-    font-size: 0.75rem;
-    padding: 0.5rem 0.75rem;
-}
-
-#liveMap {
+#eventMap {
     border: 1px solid #dee2e6;
-}
-
-.form-check-input:checked {
-    background-color: var(--primary-color);
-    border-color: var(--primary-color);
-}
-
-.form-check-input:focus {
-    box-shadow: 0 0 0 0.2rem rgba(30, 64, 175, 0.25);
 }
 
 .btn-sm {
     padding: 0.25rem 0.5rem;
     font-size: 0.875rem;
-}
-
-.analytics-item {
-    transition: all 0.3s ease;
-    cursor: pointer;
-}
-
-.analytics-item:hover {
-    background-color: #f8f9fa;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-}
-
-.hotspot-item {
-    transition: all 0.3s ease;
-    cursor: pointer;
-    background-color: #f8f9fa;
-}
-
-.hotspot-item:hover {
-    background-color: #e9ecef;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-}
-
-.hotspot-number {
-    font-size: 0.875rem;
-    color: #6c757d;
-    font-weight: 600;
-}
-
-.hotspot-count {
-    font-size: 1.25rem;
-}
-
-#mapSearch {
-    border-radius: 8px;
-}
-
-#mapSearch:focus {
-    box-shadow: 0 0 0 0.2rem rgba(30, 64, 175, 0.25);
 }
 </style>
 {% endblock %}

@@ -64,6 +64,11 @@ def sanitize_input(text):
         text = text.replace(char, '')
     return text.strip()
 
+# Context processor to make config available in templates
+@app.context_processor
+def inject_config():
+    return dict(config=app.config)
+
 # Custom Jinja2 filters
 @app.template_filter('format_date')
 def format_date(date_obj, format_str='%B %d, %Y'):
@@ -632,6 +637,16 @@ def join_event(event_id):
         longitude = float(request.form.get('longitude', 0))
     except ValueError:
         latitude = longitude = 0.0
+    
+    # Validate location coordinates (prevent 0,0 coordinates)
+    if latitude == 0.0 and longitude == 0.0:
+        flash('Location access is required to register for this event. Please enable location access and try again.', 'error')
+        return redirect(url_for('user_event_detail', event_id=event_id))
+    
+    # Validate coordinate ranges
+    if not (-90 <= latitude <= 90) or not (-180 <= longitude <= 180):
+        flash('Invalid location coordinates. Please try getting your location again.', 'error')
+        return redirect(url_for('user_event_detail', event_id=event_id))
     
     # Create registration
     registration = EventRegistration(
