@@ -31,7 +31,7 @@
 - **Root Directory**: Leave empty (root of repository)
 
 **Build & Deploy Settings:**
-- **Build Command**: `pip install -r requirements-render.txt`
+- **Build Command**: `pip install Flask==2.2.5 Flask-SQLAlchemy==3.0.3 Flask-Login==0.6.2 gunicorn==20.1.0 python-dotenv==1.0.0`
 - **Start Command**: `gunicorn wsgi:app`
 
 **Plan:**
