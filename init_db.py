@@ -4,15 +4,27 @@ Database Initialization Script for Political Events App
 Run this script to create all database tables and initial data.
 """
 
+import os
 from app_production import app, db, User
 from werkzeug.security import generate_password_hash
 
 def init_database():
     """Initialize the database with tables and initial data."""
+    
+    # Ensure instance directory exists
+    instance_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'instance')
+    if not os.path.exists(instance_dir):
+        os.makedirs(instance_dir)
+        print(f"✅ Created instance directory: {instance_dir}")
+    
     with app.app_context():
         print("Creating database tables...")
-        db.create_all()
-        print("✅ Database tables created successfully!")
+        try:
+            db.create_all()
+            print("✅ Database tables created successfully!")
+        except Exception as e:
+            print(f"❌ Error creating database: {e}")
+            return
         
         # Check if admin user exists
         admin = User.query.filter_by(role='admin').first()

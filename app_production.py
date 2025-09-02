@@ -649,49 +649,5 @@ def internal_error(error):
     db.session.rollback()
     return render_template('errors/500.html'), 500
 
-# Initialize database tables
-with app.app_context():
-    db.create_all()
-    
-    # Create admin user if not exists
-    admin = User.query.filter_by(role='admin').first()
-    if not admin:
-        admin = User(
-            email='admin@political.com',
-            phone='1234567890',
-            password_hash=generate_password_hash('admin123'),
-            role='admin'
-        )
-        db.session.add(admin)
-        db.session.commit()
-        print("Admin user created: admin@political.com / admin123")
-    
-    # Create demo party user if not exists
-    party_user = User.query.filter_by(role='party').first()
-    if not party_user:
-        party_user = User(
-            email='party@demo.com',
-            phone='9876543210',
-            password_hash=generate_password_hash('party123'),
-            role='party',
-            party_name='Demo Political Party'
-        )
-        db.session.add(party_user)
-        db.session.commit()
-        print("Demo party user created: party@demo.com / party123")
-    
-    # Create demo regular user if not exists
-    regular_user = User.query.filter_by(role='user').first()
-    if not regular_user:
-        regular_user = User(
-            email='user@demo.com',
-            phone='5555555555',
-            password_hash=generate_password_hash('user123'),
-            role='user'
-        )
-        db.session.add(regular_user)
-        db.session.commit()
-        print("Demo regular user created: user@demo.com / user123")
-
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
