@@ -1,9 +1,10 @@
 import re
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, session
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, session, Response
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
+import time
 import qrcode
 import io
 import base64
@@ -697,6 +698,77 @@ def create_ticket():
         return redirect(url_for('tickets'))
     
     return render_template('create_ticket.html')
+
+# Real-time Features API Routes
+@app.route('/api/notifications/stream')
+def notifications_stream():
+    """Server-Sent Events stream for real-time notifications"""
+    def generate():
+        while True:
+            # Check for new notifications every 5 seconds
+            time.sleep(5)
+            
+            # Get notifications for current user
+            if current_user.is_authenticated:
+                notifications = get_user_notifications(current_user.id)
+                for notification in notifications:
+                    yield f"data: {json.dumps(notification)}\n\n"
+    
+    return Response(generate(), mimetype='text/event-stream')
+
+@app.route('/api/notifications/check')
+@login_required
+def check_notifications():
+    """Polling endpoint for notifications (fallback)"""
+    notifications = get_user_notifications(current_user.id)
+    return jsonify(notifications)
+
+@app.route('/api/event/<int:event_id>/live-attendance')
+@login_required
+def live_attendance(event_id):
+    """Live attendance updates for events"""
+    event = Event.query.get_or_404(event_id)
+    
+    # Check access permissions
+    if current_user.role == 'party' and event.party_id != current_user.id:
+        return jsonify({'error': 'Access denied'}), 403
+    
+    registrations = EventRegistration.query.filter_by(event_id=event_id).all()
+    total = len(registrations)
+    present = len([r for r in registrations if r.attended])
+    pending = total - present
+    
+    return jsonify({
+        'total': total,
+        'present': present,
+        'pending': pending,
+        'timestamp': datetime.utcnow().isoformat()
+    })
+
+def get_user_notifications(user_id):
+    """Get notifications for a user (placeholder implementation)"""
+    # This is a placeholder - you can implement actual notification logic
+    notifications = []
+    
+    # Example: Check for new event registrations if user is a party
+    user = User.query.get(user_id)
+    if user and user.role == 'party':
+        # Get recent registrations for user's events
+        recent_registrations = EventRegistration.query.join(Event).filter(
+            Event.party_id == user_id,
+            EventRegistration.registered_at >= datetime.utcnow() - timedelta(minutes=5)
+        ).all()
+        
+        for reg in recent_registrations:
+            notifications.append({
+                'id': f'reg_{reg.id}',
+                'title': 'New Registration',
+                'message': f'New user registered for {reg.event.title}',
+                'urgent': False,
+                'timestamp': reg.registered_at.isoformat()
+            })
+    
+    return notifications
 
 # API Routes
 @app.route('/api/events')
