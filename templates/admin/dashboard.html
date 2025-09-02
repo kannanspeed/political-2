@@ -1,0 +1,453 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - Political Events{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 mb-1">
+                <i class="fas fa-tachometer-alt me-2 text-primary"></i>
+                Admin Dashboard
+            </h1>
+            <p class="text-muted mb-0">Platform overview and management</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-primary" onclick="refreshStats()">
+                <i class="fas fa-sync-alt me-2"></i>Refresh
+            </button>
+            <a href="{{ url_for('admin_events') }}" class="btn btn-primary">
+                <i class="fas fa-calendar-plus me-2"></i>Manage Events
+            </a>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-xl-3 col-md-6">
+            <div class="card stats-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-white-50 mb-1">Total Events</h6>
+                            <h2 class="stats-number mb-0">{{ events|length }}</h2>
+                        </div>
+                        <div class="stats-icon">
+                            <i class="fas fa-calendar-alt fa-2x text-white-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6">
+            <div class="card stats-card" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-white-50 mb-1">Total Users</h6>
+                            <h2 class="stats-number mb-0">{{ users|length }}</h2>
+                        </div>
+                        <div class="stats-icon">
+                            <i class="fas fa-users fa-2x text-white-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6">
+            <div class="card stats-card" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-white-50 mb-1">Open Tickets</h6>
+                            <h2 class="stats-number mb-0">{{ tickets|length }}</h2>
+                        </div>
+                        <div class="stats-icon">
+                            <i class="fas fa-ticket-alt fa-2x text-white-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6">
+            <div class="card stats-card" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-white-50 mb-1">Political Parties</h6>
+                            <h2 class="stats-number mb-0">{{ users|selectattr('role', 'equalto', 'party')|list|length }}</h2>
+                        </div>
+                        <div class="stats-icon">
+                            <i class="fas fa-flag fa-2x text-white-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row g-4 mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0">
+                        <i class="fas fa-bolt me-2 text-warning"></i>
+                        Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <a href="{{ url_for('admin_users') }}" class="btn btn-outline-primary w-100 py-3">
+                                <i class="fas fa-users fa-2x d-block mb-2"></i>
+                                Manage Users
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{{ url_for('admin_events') }}" class="btn btn-outline-success w-100 py-3">
+                                <i class="fas fa-calendar-alt fa-2x d-block mb-2"></i>
+                                Manage Events
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{{ url_for('admin_tickets') }}" class="btn btn-outline-warning w-100 py-3">
+                                <i class="fas fa-ticket-alt fa-2x d-block mb-2"></i>
+                                Support Tickets
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <button class="btn btn-outline-info w-100 py-3" onclick="showSystemInfo()">
+                                <i class="fas fa-info-circle fa-2x d-block mb-2"></i>
+                                System Info
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="row g-4">
+        <!-- Recent Events -->
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-calendar-alt me-2 text-primary"></i>
+                        Recent Events
+                    </h5>
+                    <a href="{{ url_for('admin_events') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    {% if events %}
+                        <div class="list-group list-group-flush">
+                            {% for event in events[:5] %}
+                            <div class="list-group-item border-0 px-0">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-1">{{ event.title }}</h6>
+                                        <p class="text-muted small mb-1">{{ event.party_name }}</p>
+                                        <small class="text-muted">
+                                            <i class="fas fa-map-marker-alt me-1"></i>
+                                            {{ event.location }}
+                                        </small>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="badge bg-{{ 'success' if event.is_active else 'secondary' }} mb-1">
+                                            {{ 'Active' if event.is_active else 'Inactive' }}
+                                        </span>
+                                        <br>
+                                        <small class="text-muted">
+                                            {{ event.event_date.strftime('%b %d, %Y') }}
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No events created yet</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Users -->
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-users me-2 text-success"></i>
+                        Recent Users
+                    </h5>
+                    <a href="{{ url_for('admin_users') }}" class="btn btn-sm btn-outline-success">View All</a>
+                </div>
+                <div class="card-body">
+                    {% if users %}
+                        <div class="list-group list-group-flush">
+                            {% for user in users[:5] %}
+                            <div class="list-group-item border-0 px-0">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-1">{{ user.email }}</h6>
+                                        <p class="text-muted small mb-1">
+                                            {% if user.party_name %}
+                                                {{ user.party_name }}
+                                            {% else %}
+                                                Regular User
+                                            {% endif %}
+                                        </p>
+                                        <small class="text-muted">
+                                            <i class="fas fa-clock me-1"></i>
+                                            {{ user.created_at.strftime('%b %d, %Y') }}
+                                        </small>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="badge bg-{{ 'primary' if user.role == 'party' else 'success' if user.role == 'user' else 'warning' }} mb-1">
+                                            {{ user.role.title() }}
+                                        </span>
+                                        <br>
+                                        <small class="text-muted">
+                                            {% if user.phone %}
+                                                <i class="fas fa-phone me-1"></i>
+                                                {{ user.phone }}
+                                            {% endif %}
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-user-times fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No users registered yet</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Open Tickets -->
+    {% if tickets %}
+    <div class="row g-4 mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-exclamation-triangle me-2 text-warning"></i>
+                        Open Support Tickets
+                    </h5>
+                    <a href="{{ url_for('admin_tickets') }}" class="btn btn-sm btn-outline-warning">View All</a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Subject</th>
+                                    <th>Status</th>
+                                    <th>Created</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for ticket in tickets[:5] %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-sm me-2">
+                                                <i class="fas fa-user-circle fa-2x text-primary"></i>
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-0">{{ ticket.user.email }}</h6>
+                                                <small class="text-muted">{{ ticket.user.role.title() }}</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <strong>{{ ticket.subject }}</strong>
+                                        <br>
+                                        <small class="text-muted">{{ ticket.message[:50] }}...</small>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-warning">{{ ticket.status.title() }}</span>
+                                    </td>
+                                    <td>
+                                        <small class="text-muted">
+                                            {{ ticket.created_at.strftime('%b %d, %Y %H:%M') }}
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <a href="{{ url_for('admin_tickets') }}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye me-1"></i>View
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- System Info Modal -->
+<div class="modal fade" id="systemInfoModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-info-circle me-2 text-info"></i>
+                    System Information
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <i class="fas fa-database fa-2x text-primary mb-2"></i>
+                                <h6>Database</h6>
+                                <p class="mb-0">SQLite (Development)</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <i class="fas fa-server fa-2x text-success mb-2"></i>
+                                <h6>Backend</h6>
+                                <p class="mb-0">Flask + Python</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <i class="fas fa-mobile-alt fa-2x text-warning mb-2"></i>
+                                <h6>Frontend</h6>
+                                <p class="mb-0">HTML + CSS + JS</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <i class="fas fa-socket fa-2x text-info mb-2"></i>
+                                <h6>Real-time</h6>
+                                <p class="mb-0">Socket.IO</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <h6>Platform Features</h6>
+                <ul class="list-unstyled">
+                    <li><i class="fas fa-check text-success me-2"></i>User Authentication & Authorization</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Event Management System</li>
+                    <li><i class="fas fa-check text-success me-2"></i>QR Code Generation & Scanning</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Location Tracking & Maps</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Real-time Notifications</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Support Ticket System</li>
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function refreshStats() {
+    // Simulate refreshing statistics
+    const refreshBtn = event.target;
+    const originalText = showLoading(refreshBtn);
+    
+    setTimeout(() => {
+        hideLoading(refreshBtn, originalText);
+        showAlert('Statistics refreshed successfully!', 'success');
+    }, 1000);
+}
+
+function showSystemInfo() {
+    const modal = new bootstrap.Modal(document.getElementById('systemInfoModal'));
+    modal.show();
+}
+
+// Auto-refresh stats every 30 seconds
+setInterval(() => {
+    // You can implement real-time updates here
+}, 30000);
+
+// Initialize tooltips
+document.addEventListener('DOMContentLoaded', function() {
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.stats-card {
+    transition: transform 0.3s ease;
+}
+
+.stats-card:hover {
+    transform: translateY(-5px);
+}
+
+.stats-icon {
+    opacity: 0.8;
+}
+
+.avatar-sm {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.list-group-item {
+    transition: background-color 0.2s ease;
+}
+
+.list-group-item:hover {
+    background-color: rgba(30, 64, 175, 0.05);
+}
+
+.quick-actions .btn {
+    transition: all 0.3s ease;
+}
+
+.quick-actions .btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+</style>
+{% endblock %}
+

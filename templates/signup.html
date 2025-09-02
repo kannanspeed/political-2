@@ -1,0 +1,604 @@
+{% extends "base.html" %}
+
+{% block title %}Sign Up - Political Events{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-lg border-0">
+                <div class="card-body p-5">
+                    <div class="text-center mb-4">
+                        <div class="signup-icon mb-3">
+                            <i class="fas fa-user-plus fa-3x text-primary"></i>
+                        </div>
+                        <h2 class="fw-bold">Create Account</h2>
+                        <p class="text-muted">Join Political Events and start engaging with your community</p>
+                    </div>
+                    
+                    <!-- Role Selection -->
+                    <div class="role-selection mb-4">
+                        <label class="form-label fw-semibold mb-3">
+                            <i class="fas fa-users me-2"></i>Select Your Role
+                        </label>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="role-option" data-role="user">
+                                    <div class="card h-100 text-center p-3 role-card">
+                                        <div class="card-body">
+                                            <i class="fas fa-user fa-2x text-success mb-2"></i>
+                                            <h6 class="mb-1">Event Participant</h6>
+                                            <small class="text-muted">Join and attend events</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="role-option" data-role="party">
+                                    <div class="card h-100 text-center p-3 role-card">
+                                        <div class="card-body">
+                                            <i class="fas fa-user-tie fa-2x text-primary mb-2"></i>
+                                            <h6 class="mb-1">Political Party</h6>
+                                            <small class="text-muted">Create and manage events</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <form method="POST" id="signupForm">
+                        <input type="hidden" name="role" id="selectedRole" value="user">
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="email" class="form-label fw-semibold">
+                                        <i class="fas fa-envelope me-2"></i>Email Address
+                                    </label>
+                                    <input type="email" class="form-control" id="email" name="email" required>
+                                    <div class="form-text" id="emailHelp">
+                                        <span class="text-muted">Use business email for political parties</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="phone" class="form-label fw-semibold">
+                                        <i class="fas fa-phone me-2"></i>Phone Number
+                                    </label>
+                                    <input type="tel" class="form-control" id="phone" name="phone" required>
+                                    <div class="form-text" id="phoneHelp">
+                                        <span class="text-muted">Enter a 10-digit phone number</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="password" class="form-label fw-semibold">
+                                        <i class="fas fa-lock me-2"></i>Password
+                                    </label>
+                                    <div class="input-group">
+                                        <input type="password" class="form-control" id="password" name="password" required>
+                                        <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
+                                    <div class="password-strength mt-2" id="passwordStrength"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="confirmPassword" class="form-label fw-semibold">
+                                        <i class="fas fa-lock me-2"></i>Confirm Password
+                                    </label>
+                                    <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" required>
+                                    <div class="form-text" id="passwordMatch"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Party-specific fields -->
+                        <div id="partyFields" style="display: none;">
+                            <div class="mb-3">
+                                <label for="partyName" class="form-label fw-semibold">
+                                    <i class="fas fa-flag me-2"></i>Party Name
+                                </label>
+                                <input type="text" class="form-control" id="partyName" name="party_name" placeholder="Enter your political party name">
+                            </div>
+                            
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>Note:</strong> Political parties must use business email addresses (.com, .org, .gov)
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="agreeTerms" required>
+                                <label class="form-check-label" for="agreeTerms">
+                                    I agree to the <a href="#" class="text-decoration-none">Terms & Conditions</a> and 
+                                    <a href="#" class="text-decoration-none">Privacy Policy</a>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary w-100 py-3 mb-3" id="submitBtn" disabled>
+                            <i class="fas fa-user-plus me-2"></i>Create Account
+                        </button>
+                    </form>
+                    
+                    <div class="text-center">
+                        <p class="mb-0 text-muted">
+                            Already have an account? 
+                            <a href="{{ url_for('login') }}" class="text-decoration-none fw-semibold">Sign in here</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const roleOptions = document.querySelectorAll('.role-option');
+    const selectedRoleInput = document.getElementById('selectedRole');
+    const partyFields = document.getElementById('partyFields');
+    const emailInput = document.getElementById('email');
+    const emailHelp = document.getElementById('emailHelp');
+    const passwordInput = document.getElementById('password');
+    const confirmPasswordInput = document.getElementById('confirmPassword');
+    const passwordStrength = document.getElementById('passwordStrength');
+    const passwordMatch = document.getElementById('passwordMatch');
+    const agreeTerms = document.getElementById('agreeTerms');
+    const submitBtn = document.getElementById('submitBtn');
+    const signupForm = document.getElementById('signupForm');
+    
+    // Role selection
+    roleOptions.forEach(option => {
+        option.addEventListener('click', function() {
+            // Remove active class from all options
+            roleOptions.forEach(opt => opt.classList.remove('active'));
+            
+            // Add active class to selected option
+            this.classList.add('active');
+            
+            // Update hidden input
+            const role = this.dataset.role;
+            selectedRoleInput.value = role;
+            
+            // Show/hide party fields
+            if (role === 'party') {
+                partyFields.style.display = 'block';
+                emailHelp.innerHTML = '<span class="text-warning">Business email required (.com, .org, .gov)</span>';
+            } else {
+                partyFields.style.display = 'none';
+                emailHelp.innerHTML = '<span class="text-muted">Any email address accepted</span>';
+            }
+            
+            validateForm();
+        });
+    });
+    
+    // Enhanced password strength checker
+    passwordInput.addEventListener('input', function() {
+        const password = this.value;
+        let strength = 0;
+        let feedback = '';
+        let requirements = [];
+        
+        // Check each requirement
+        if (password.length >= 8) {
+            strength++;
+            requirements.push('<span class="text-success">✓ At least 8 characters</span>');
+        } else {
+            requirements.push('<span class="text-danger">✗ At least 8 characters</span>');
+        }
+        
+        if (/[a-z]/.test(password)) {
+            strength++;
+            requirements.push('<span class="text-success">✓ Lowercase letter</span>');
+        } else {
+            requirements.push('<span class="text-danger">✗ Lowercase letter</span>');
+        }
+        
+        if (/[A-Z]/.test(password)) {
+            strength++;
+            requirements.push('<span class="text-success">✓ Uppercase letter</span>');
+        } else {
+            requirements.push('<span class="text-danger">✗ Uppercase letter</span>');
+        }
+        
+        if (/[0-9]/.test(password)) {
+            strength++;
+            requirements.push('<span class="text-success">✓ Number</span>');
+        } else {
+            requirements.push('<span class="text-danger">✗ Number</span>');
+        }
+        
+        if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+            strength++;
+            requirements.push('<span class="text-success">✓ Special character</span>');
+        } else {
+            requirements.push('<span class="text-danger">✗ Special character</span>');
+        }
+        
+        // Determine strength level
+        switch(strength) {
+            case 0:
+            case 1:
+                feedback = '<span class="text-danger">Very Weak</span>';
+                break;
+            case 2:
+                feedback = '<span class="text-warning">Weak</span>';
+                break;
+            case 3:
+                feedback = '<span class="text-info">Fair</span>';
+                break;
+            case 4:
+                feedback = '<span class="text-primary">Good</span>';
+                break;
+            case 5:
+                feedback = '<span class="text-success">Strong</span>';
+                break;
+        }
+        
+        // Update password strength display
+        passwordStrength.innerHTML = `
+            <div class="mb-2">
+                <strong>Password Strength:</strong> ${feedback}
+            </div>
+            <div class="password-requirements">
+                <small class="text-muted">Requirements:</small><br>
+                ${requirements.join('<br>')}
+            </div>
+        `;
+        
+        validateForm();
+    });
+    
+    // Password confirmation checker
+    confirmPasswordInput.addEventListener('input', function() {
+        const password = passwordInput.value;
+        const confirm = this.value;
+        
+        if (confirm === '') {
+            passwordMatch.innerHTML = '';
+        } else if (password === confirm) {
+            passwordMatch.innerHTML = '<span class="text-success">Passwords match</span>';
+        } else {
+            passwordMatch.innerHTML = '<span class="text-danger">Passwords do not match</span>';
+        }
+        
+        validateForm();
+    });
+    
+    // Terms agreement checker
+    agreeTerms.addEventListener('change', validateForm);
+    
+    // Party name validation
+    const partyNameInput = document.getElementById('partyName');
+    if (partyNameInput) {
+        partyNameInput.addEventListener('input', validateForm);
+    }
+    
+    // Phone number validation
+    const phoneInput = document.getElementById('phone');
+    const phoneHelp = document.getElementById('phoneHelp');
+    if (phoneInput) {
+        phoneInput.addEventListener('input', function() {
+            const phone = this.value;
+            const cleanPhone = phone.replace(/\D/g, '');
+            
+            if (phone === '') {
+                phoneHelp.innerHTML = '<span class="text-muted">Enter a 10-digit phone number</span>';
+            } else if (cleanPhone.length === 10) {
+                phoneHelp.innerHTML = '<span class="text-success">✓ Valid phone number</span>';
+            } else if (cleanPhone.length < 10) {
+                phoneHelp.innerHTML = '<span class="text-warning">Phone number too short</span>';
+            } else {
+                phoneHelp.innerHTML = '<span class="text-danger">Phone number too long</span>';
+            }
+            
+            validateForm();
+        });
+    }
+    
+    // Form validation
+    function validateForm() {
+        const email = emailInput.value.trim().toLowerCase();
+        const password = passwordInput.value;
+        const confirm = confirmPasswordInput.value;
+        const role = selectedRoleInput.value;
+        const agreed = agreeTerms.checked;
+        const partyName = document.getElementById('partyName').value.trim();
+        const phone = phoneInput.value;
+        
+        let isValid = true;
+        let errorMessages = [];
+        
+        // ===== COMPREHENSIVE VALIDATION =====
+        
+        // 1. Basic Field Validation
+        if (!email) {
+            errorMessages.push('Email is required');
+            isValid = false;
+        }
+        
+        if (!phone) {
+            errorMessages.push('Phone number is required');
+            isValid = false;
+        }
+        
+        if (!password) {
+            errorMessages.push('Password is required');
+            isValid = false;
+        }
+        
+        if (!confirm) {
+            errorMessages.push('Password confirmation is required');
+            isValid = false;
+        }
+        
+        if (!agreed) {
+            errorMessages.push('You must agree to terms and conditions');
+            isValid = false;
+        }
+        
+        // 2. Email Validation
+        if (email) {
+            const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+            if (!emailPattern.test(email)) {
+                errorMessages.push('Please enter a valid email address');
+                isValid = false;
+            }
+        }
+        
+        // 3. Phone Number Validation
+        if (phone) {
+            const cleanPhone = phone.replace(/\D/g, '');
+            if (cleanPhone.length !== 10) {
+                errorMessages.push('Phone number must be exactly 10 digits');
+                isValid = false;
+            }
+        }
+        
+        // 4. Password Validation
+        if (password) {
+            if (password.length < 8) {
+                errorMessages.push('Password must be at least 8 characters long');
+                isValid = false;
+            }
+            
+            if (!/[A-Z]/.test(password)) {
+                errorMessages.push('Password must contain at least one uppercase letter');
+                isValid = false;
+            }
+            
+            if (!/[a-z]/.test(password)) {
+                errorMessages.push('Password must contain at least one lowercase letter');
+                isValid = false;
+            }
+            
+            if (!/\d/.test(password)) {
+                errorMessages.push('Password must contain at least one number');
+                isValid = false;
+            }
+            
+            if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+                errorMessages.push('Password must contain at least one special character');
+                isValid = false;
+            }
+        }
+        
+        // 5. Password Confirmation
+        if (password && confirm && password !== confirm) {
+            errorMessages.push('Passwords do not match');
+            isValid = false;
+        }
+        
+        // 6. Role-specific validation
+        if (role === 'party') {
+            // Business email validation
+            if (email && !email.endsWith('.com') && !email.endsWith('.org') && !email.endsWith('.gov')) {
+                errorMessages.push('Political parties must use business email addresses (.com, .org, .gov)');
+                isValid = false;
+            }
+            
+            // Party name validation
+            if (!partyName || partyName.length < 3) {
+                errorMessages.push('Party name must be at least 3 characters long');
+                isValid = false;
+            }
+            
+            if (partyName.length > 100) {
+                errorMessages.push('Party name is too long (maximum 100 characters)');
+                isValid = false;
+            }
+        }
+        
+        // Update submit button state
+        submitBtn.disabled = !isValid;
+        
+        // Show validation summary if there are errors
+        showValidationSummary(errorMessages);
+        
+        return isValid;
+    }
+    
+    // Show validation summary
+    function showValidationSummary(errors) {
+        let summaryDiv = document.getElementById('validationSummary');
+        if (!summaryDiv) {
+            summaryDiv = document.createElement('div');
+            summaryDiv.id = 'validationSummary';
+            summaryDiv.className = 'alert alert-danger mt-3';
+            summaryDiv.style.display = 'none';
+            signupForm.insertBefore(summaryDiv, submitBtn);
+        }
+        
+        if (errors.length > 0) {
+            summaryDiv.innerHTML = `
+                <h6><i class="fas fa-exclamation-triangle me-2"></i>Please fix the following errors:</h6>
+                <ul class="mb-0">
+                    ${errors.map(error => `<li>${error}</li>`).join('')}
+                </ul>
+            `;
+            summaryDiv.style.display = 'block';
+        } else {
+            summaryDiv.style.display = 'none';
+        }
+    }
+    
+    // Toggle password visibility
+    const togglePassword = document.getElementById('togglePassword');
+    togglePassword.addEventListener('click', function() {
+        const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+        passwordInput.setAttribute('type', type);
+        
+        const icon = this.querySelector('i');
+        icon.classList.toggle('fa-eye');
+        icon.classList.toggle('fa-eye-slash');
+    });
+    
+    // Loading functions
+    function showLoading(button) {
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Creating Account...';
+        button.disabled = true;
+        return originalText;
+    }
+    
+    function hideLoading(button, originalText) {
+        button.innerHTML = originalText;
+        button.disabled = false;
+    }
+    
+    // Form submission
+    signupForm.addEventListener('submit', function(e) {
+        // Validate form before submission
+        validateForm();
+        
+        if (submitBtn.disabled) {
+            e.preventDefault();
+            return false;
+        }
+        
+        const originalText = showLoading(submitBtn);
+        
+        // Simulate loading (remove in production)
+        setTimeout(() => {
+            hideLoading(submitBtn, originalText);
+        }, 2000);
+    });
+    
+    // Auto-select role from URL parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    const roleParam = urlParams.get('role');
+    if (roleParam && (roleParam === 'user' || roleParam === 'party')) {
+        const targetOption = document.querySelector(`[data-role="${roleParam}"]`);
+        if (targetOption) {
+            targetOption.click();
+        }
+    }
+    
+    // Initialize form validation
+    validateForm();
+});
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.signup-icon {
+    animation: bounceIn 1s ease-out;
+}
+
+@keyframes bounceIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.3);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.05);
+    }
+    70% {
+        transform: scale(0.9);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.role-card {
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.role-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.role-option.active .role-card {
+    border-color: var(--primary-color);
+    background: linear-gradient(135deg, rgba(30, 64, 175, 0.1), rgba(30, 64, 175, 0.05));
+}
+
+.password-strength {
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.form-control:focus {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(30, 64, 175, 0.15);
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+}
+
+.card {
+    animation: slideUp 0.6s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+#partyFields {
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+</style>
+{% endblock %}
+

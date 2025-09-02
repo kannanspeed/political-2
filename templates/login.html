@@ -1,0 +1,307 @@
+{% extends "base.html" %}
+
+{% block title %}Login - Political Events{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card shadow-lg border-0">
+                <div class="card-body p-5">
+                    <div class="text-center mb-4">
+                        <div class="login-icon mb-3">
+                            <i class="fas fa-sign-in-alt fa-3x text-primary"></i>
+                        </div>
+                        <h2 class="fw-bold">Welcome Back</h2>
+                        <p class="text-muted">Sign in to your Political Events account</p>
+                    </div>
+                    
+                    <form method="POST" id="loginForm">
+                        <div class="mb-3">
+                            <label for="email" class="form-label fw-semibold">
+                                <i class="fas fa-envelope me-2"></i>Email Address
+                            </label>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                            <div class="form-text" id="emailHelp">
+                                <span class="text-muted">Enter your registered email address</span>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="password" class="form-label fw-semibold">
+                                <i class="fas fa-lock me-2"></i>Password
+                            </label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="password" name="password" required>
+                                <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            <div class="form-text" id="passwordHelp">
+                                <span class="text-muted">Enter your password</span>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="rememberMe">
+                                <label class="form-check-label" for="rememberMe">
+                                    Remember me
+                                </label>
+                            </div>
+                            <a href="#" class="text-decoration-none text-primary">Forgot password?</a>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary w-100 py-3 mb-3">
+                            <i class="fas fa-sign-in-alt me-2"></i>Sign In
+                        </button>
+                    </form>
+                    
+                    <div class="text-center">
+                        <p class="mb-0 text-muted">
+                            Don't have an account? 
+                            <a href="{{ url_for('signup') }}" class="text-decoration-none fw-semibold">Sign up here</a>
+                        </p>
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <div class="text-center">
+                        <p class="text-muted small mb-3">Quick Access</p>
+                        <div class="d-flex gap-2 justify-content-center">
+                            <a href="{{ url_for('signup') }}?role=party" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-user-tie me-1"></i>Party
+                            </a>
+                            <a href="{{ url_for('signup') }}?role=user" class="btn btn-outline-success btn-sm">
+                                <i class="fas fa-user me-1"></i>User
+                            </a>
+                            <a href="{{ url_for('login') }}" class="btn btn-outline-warning btn-sm">
+                                <i class="fas fa-shield-alt me-1"></i>Admin
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const togglePassword = document.getElementById('togglePassword');
+    const password = document.getElementById('password');
+    const email = document.getElementById('email');
+    const loginForm = document.getElementById('loginForm');
+    const submitBtn = document.querySelector('button[type="submit"]');
+    const emailHelp = document.getElementById('emailHelp');
+    const passwordHelp = document.getElementById('passwordHelp');
+    
+    // ===== ENHANCED LOGIN VALIDATION =====
+    
+    // Email validation
+    email.addEventListener('input', function() {
+        const emailValue = this.value.trim().toLowerCase();
+        const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        
+        if (emailValue === '') {
+            emailHelp.innerHTML = '<span class="text-muted">Enter your registered email address</span>';
+        } else if (emailPattern.test(emailValue)) {
+            emailHelp.innerHTML = '<span class="text-success">✓ Valid email format</span>';
+        } else {
+            emailHelp.innerHTML = '<span class="text-danger">Please enter a valid email address</span>';
+        }
+        
+        validateLoginForm();
+    });
+    
+    // Password validation
+    password.addEventListener('input', function() {
+        const passwordValue = this.value;
+        
+        if (passwordValue === '') {
+            passwordHelp.innerHTML = '<span class="text-muted">Enter your password</span>';
+        } else if (passwordValue.length < 1) {
+            passwordHelp.innerHTML = '<span class="text-danger">Password is required</span>';
+        } else {
+            passwordHelp.innerHTML = '<span class="text-success">✓ Password entered</span>';
+        }
+        
+        validateLoginForm();
+    });
+    
+    // Login form validation
+    function validateLoginForm() {
+        const emailValue = email.value.trim();
+        const passwordValue = password.value;
+        
+        let isValid = true;
+        let errorMessages = [];
+        
+        // Basic validation
+        if (!emailValue) {
+            errorMessages.push('Email is required');
+            isValid = false;
+        }
+        
+        if (!passwordValue) {
+            errorMessages.push('Password is required');
+            isValid = false;
+        }
+        
+        // Email format validation
+        if (emailValue) {
+            const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+            if (!emailPattern.test(emailValue)) {
+                errorMessages.push('Please enter a valid email address');
+                isValid = false;
+            }
+        }
+        
+        // Update submit button
+        submitBtn.disabled = !isValid;
+        
+        // Show validation summary
+        showLoginValidationSummary(errorMessages);
+        
+        return isValid;
+    }
+    
+    // Show login validation summary
+    function showLoginValidationSummary(errors) {
+        let summaryDiv = document.getElementById('loginValidationSummary');
+        if (!summaryDiv) {
+            summaryDiv = document.createElement('div');
+            summaryDiv.id = 'loginValidationSummary';
+            summaryDiv.className = 'alert alert-danger mt-3';
+            summaryDiv.style.display = 'none';
+            loginForm.insertBefore(summaryDiv, submitBtn);
+        }
+        
+        if (errors.length > 0) {
+            summaryDiv.innerHTML = `
+                <h6><i class="fas fa-exclamation-triangle me-2"></i>Please fix the following errors:</h6>
+                <ul class="mb-0">
+                    ${errors.map(error => `<li>${error}</li>`).join('')}
+                </ul>
+            `;
+            summaryDiv.style.display = 'block';
+        } else {
+            summaryDiv.style.display = 'none';
+        }
+    }
+    
+    // Toggle password visibility
+    togglePassword.addEventListener('click', function() {
+        const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+        password.setAttribute('type', type);
+        
+        const icon = this.querySelector('i');
+        icon.classList.toggle('fa-eye');
+        icon.classList.toggle('fa-eye-slash');
+    });
+    
+    // Form submission with validation
+    loginForm.addEventListener('submit', function(e) {
+        if (!validateLoginForm()) {
+            e.preventDefault();
+            return false;
+        }
+        
+        // Show loading state
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Signing In...';
+        submitBtn.disabled = true;
+        
+        // Reset loading state after a delay (in case of errors)
+        setTimeout(() => {
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        }, 5000);
+    });
+    
+    // Initialize validation
+    validateLoginForm();
+    
+    // Form submission with loading state
+    loginForm.addEventListener('submit', function(e) {
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalText = showLoading(submitBtn);
+        
+        // Simulate loading (remove in production)
+        setTimeout(() => {
+            hideLoading(submitBtn, originalText);
+        }, 2000);
+    });
+    
+    // Auto-focus on email field
+    document.getElementById('email').focus();
+    
+    // Add floating labels effect
+    const inputs = document.querySelectorAll('.form-control');
+    inputs.forEach(input => {
+        input.addEventListener('focus', function() {
+            this.parentElement.classList.add('focused');
+        });
+        
+        input.addEventListener('blur', function() {
+            if (!this.value) {
+                this.parentElement.classList.remove('focused');
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.login-icon {
+    animation: bounceIn 1s ease-out;
+}
+
+@keyframes bounceIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.3);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.05);
+    }
+    70% {
+        transform: scale(0.9);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.form-control:focus {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(30, 64, 175, 0.15);
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+}
+
+.card {
+    animation: slideUp 0.6s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+</style>
+{% endblock %}
+

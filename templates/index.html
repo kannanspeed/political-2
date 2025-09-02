@@ -1,0 +1,260 @@
+{% extends "base.html" %}
+
+{% block title %}Political Events - Connect Through Political Engagement{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section text-center text-white py-5" style="background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);">
+    <div class="container">
+        <div class="row align-items-center min-vh-75">
+            <div class="col-lg-8 mx-auto">
+                <h1 class="display-3 fw-bold mb-4">
+                    <i class="fas fa-flag-usa me-3"></i>
+                    Political Events Platform
+                </h1>
+                <p class="lead mb-4 fs-5">
+                    Connect communities through political engagement. Create, manage, and participate in political events with real-time tracking and interactive features.
+                </p>
+                <div class="d-flex gap-3 justify-content-center flex-wrap">
+                    <a href="{{ url_for('signup') }}" class="btn btn-light btn-lg px-4 py-3">
+                        <i class="fas fa-user-plus me-2"></i>Get Started
+                    </a>
+                    <a href="{{ url_for('login') }}" class="btn btn-outline-light btn-lg px-4 py-3">
+                        <i class="fas fa-sign-in-alt me-2"></i>Login
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="display-5 fw-bold mb-3">Platform Features</h2>
+            <p class="lead text-muted">Everything you need for successful political events</p>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card h-100 text-center p-4">
+                    <div class="card-body">
+                        <div class="feature-icon mb-3">
+                            <i class="fas fa-calendar-plus fa-3x text-primary"></i>
+                        </div>
+                        <h4 class="card-title">Event Management</h4>
+                        <p class="card-text">Create and manage political events with ease. Generate unique QR codes, track registrations, and monitor attendance in real-time.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card h-100 text-center p-4">
+                    <div class="card-body">
+                        <div class="feature-icon mb-3">
+                            <i class="fas fa-map-marked-alt fa-3x text-success"></i>
+                        </div>
+                        <h4 class="card-title">Location Tracking</h4>
+                        <p class="card-text">Real-time location tracking for registered users. View live maps of event participants and optimize event planning.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card h-100 text-center p-4">
+                    <div class="card-body">
+                        <div class="feature-icon mb-3">
+                            <i class="fas fa-qrcode fa-3x text-warning"></i>
+                        </div>
+                        <h4 class="card-title">QR Verification</h4>
+                        <p class="card-text">Streamlined check-in process with QR code scanning. Mark attendance instantly and maintain accurate records.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row g-4 mt-4">
+            <div class="col-md-4">
+                <div class="card h-100 text-center p-4">
+                    <div class="card-body">
+                        <div class="feature-icon mb-3">
+                            <i class="fas fa-chart-line fa-3x text-info"></i>
+                        </div>
+                        <h4 class="card-title">Analytics Dashboard</h4>
+                        <p class="card-text">Comprehensive analytics and reporting. Track registration trends, attendance rates, and event performance metrics.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card h-100 text-center p-4">
+                    <div class="card-body">
+                        <div class="feature-icon mb-3">
+                            <i class="fas fa-bell fa-3x text-danger"></i>
+                        </div>
+                        <h4 class="card-title">Smart Notifications</h4>
+                        <p class="card-text">Automated notifications for event updates, reminders, and important announcements. Keep everyone informed and engaged.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card h-100 text-center p-4">
+                    <div class="card-body">
+                        <div class="feature-icon mb-3">
+                            <i class="fas fa-headset fa-3x text-secondary"></i>
+                        </div>
+                        <h4 class="card-title">Support System</h4>
+                        <p class="card-text">Built-in support ticket system for users and parties. Get help when you need it with our responsive support team.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- User Roles Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="display-5 fw-bold mb-3">Choose Your Role</h2>
+            <p class="lead text-muted">Different roles for different needs</p>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-lg-4">
+                <div class="card h-100 border-0 shadow-lg">
+                    <div class="card-body text-center p-5">
+                        <div class="role-icon mb-4">
+                            <i class="fas fa-user-tie fa-4x text-primary"></i>
+                        </div>
+                        <h3 class="card-title mb-3">Political Party</h3>
+                        <p class="card-text mb-4">
+                            Create and manage political events. Track registrations, monitor attendance, and engage with your community through our comprehensive platform.
+                        </p>
+                        <ul class="list-unstyled text-start mb-4">
+                            <li><i class="fas fa-check text-success me-2"></i>Event creation and management</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Real-time attendance tracking</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Location-based analytics</li>
+                            <li><i class="fas fa-check text-success me-2"></i>QR code generation</li>
+                        </ul>
+                        <a href="{{ url_for('signup') }}?role=party" class="btn btn-primary btn-lg">
+                            Register as Party
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <div class="card h-100 border-0 shadow-lg">
+                    <div class="card-body text-center p-5">
+                        <div class="role-icon mb-4">
+                            <i class="fas fa-user fa-4x text-success"></i>
+                        </div>
+                        <h3 class="card-title mb-3">Event Participant</h3>
+                        <p class="card-text mb-4">
+                            Discover and join political events in your area. Stay informed, participate actively, and connect with your community through meaningful engagement.
+                        </p>
+                        <ul class="list-unstyled text-start mb-4">
+                            <li><i class="fas fa-check text-success me-2"></i>Browse upcoming events</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Easy registration process</li>
+                            <li><i class="fas fa-check text-success me-2"></i>QR code check-in</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Event notifications</li>
+                        </ul>
+                        <a href="{{ url_for('signup') }}?role=user" class="btn btn-success btn-lg">
+                            Join as Participant
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <div class="card h-100 border-0 shadow-lg">
+                    <div class="card-body text-center p-5">
+                        <div class="role-icon mb-4">
+                            <i class="fas fa-shield-alt fa-4x text-warning"></i>
+                        </div>
+                        <h3 class="card-title mb-3">Platform Admin</h3>
+                        <p class="card-text mb-4">
+                            Manage the platform, oversee events, and ensure smooth operations. Monitor system health and provide support to all users.
+                        </p>
+                        <ul class="list-unstyled text-start mb-4">
+                            <li><i class="fas fa-check text-success me-2"></i>Platform oversight</li>
+                            <li><i class="fas fa-check text-success me-2"></i>User management</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Support ticket resolution</li>
+                            <li><i class="fas fa-check text-success me-2"></i>System analytics</li>
+                        </ul>
+                        <a href="{{ url_for('login') }}" class="btn btn-warning btn-lg">
+                            Admin Access
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="py-5 text-center text-white" style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <h2 class="display-5 fw-bold mb-4">Ready to Get Started?</h2>
+                <p class="lead mb-4">
+                    Join thousands of users already using our platform to create meaningful political engagement opportunities.
+                </p>
+                <div class="d-flex gap-3 justify-content-center flex-wrap">
+                    <a href="{{ url_for('signup') }}" class="btn btn-light btn-lg px-5 py-3">
+                        <i class="fas fa-rocket me-2"></i>Start Now
+                    </a>
+                    <a href="{{ url_for('login') }}" class="btn btn-outline-light btn-lg px-5 py-3">
+                        <i class="fas fa-sign-in-alt me-2"></i>Sign In
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero-section {
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .hero-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="75" cy="75" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="50" cy="10" r="0.5" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+        opacity: 0.3;
+    }
+    
+    .min-vh-75 {
+        min-height: 75vh;
+    }
+    
+    .feature-icon {
+        transition: transform 0.3s ease;
+    }
+    
+    .card:hover .feature-icon {
+        transform: scale(1.1);
+    }
+    
+    .role-icon {
+        transition: transform 0.3s ease;
+    }
+    
+    .card:hover .role-icon {
+        transform: translateY(-10px);
+    }
+</style>
+{% endblock %}
+
