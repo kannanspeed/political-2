@@ -125,24 +125,24 @@ MAIL_PASSWORD=your-app-password
 ### Deploy to Heroku
 
 1. **Install Heroku CLI**
-   ```bash
+```bash
    # Download from https://devcenter.heroku.com/articles/heroku-cli
    ```
 
 2. **Create Heroku app**
    ```bash
    heroku create your-app-name
-   ```
+```
 
 3. **Set environment variables**
-   ```bash
+```bash
    heroku config:set SECRET_KEY=your-secret-key
    heroku config:set FLASK_ENV=production
    heroku config:set GOOGLE_MAPS_API_KEY=your-api-key
    ```
 
 4. **Deploy**
-   ```bash
+```bash
    git push heroku main
    ```
 

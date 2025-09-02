@@ -103,10 +103,10 @@ Once deployment is successful:
 
 **1. Build Failures**
 - Check build logs in Render dashboard
-- Verify all dependencies in `requirements-render.txt`
-- Ensure Python version compatibility (use Python 3.11.7)
+- Verify all dependencies in `requirements.txt`
+- Ensure Python version compatibility (use Python 3.13.0)
 - If you see "Getting requirements to build wheel" errors:
-  - Use `requirements-render.txt` instead of `requirements.txt`
+  - Use `requirements.txt` (updated for Python 3.13)
   - Try the simplified start command: `gunicorn wsgi:app`
   - Check if any packages have version conflicts
 
