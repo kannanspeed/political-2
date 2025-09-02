@@ -246,7 +246,10 @@ def login():
         session['login_attempts'] = 0
         session.pop('last_attempt', None)
         
-        login_user(user)
+        # Make session permanent for persistence across deployments
+        session.permanent = True
+        
+        login_user(user, remember=True)  # Enable remember me functionality
         flash(f'Welcome back, {user.email}!', 'success')
         
         # Redirect based on role
@@ -352,8 +355,17 @@ def signup():
             db.session.add(user)
             db.session.commit()
             
-            flash('Registration successful! Please login.', 'success')
-            return redirect(url_for('login'))
+            # Automatically log in the new user with persistent session
+            session.permanent = True
+            login_user(user, remember=True)
+            
+            flash('Registration successful! Welcome to Political Events!', 'success')
+            
+            # Redirect based on role
+            if user.role == 'party':
+                return redirect(url_for('party_dashboard'))
+            else:
+                return redirect(url_for('user_dashboard'))
             
         except Exception as e:
             db.session.rollback()
@@ -448,6 +460,13 @@ def party_dashboard():
         events_data.append(event_data)
     
     return render_template('party/dashboard.html', events=events, events_data=events_data, now=datetime.utcnow())
+
+@app.before_request
+def before_request():
+    """Refresh session before each request to keep it alive"""
+    if current_user.is_authenticated:
+        session.permanent = True
+        session.modified = True
 
 @app.route('/party/create_event', methods=['GET', 'POST'])
 @login_required

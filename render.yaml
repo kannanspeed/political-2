@@ -16,6 +16,14 @@ services:
         value: sqlite:///instance/political_events.db
       - key: GOOGLE_MAPS_API_KEY
         value: AIzaSyC4VX_V-P58o0lS1OTAkpfqqRPeNoc61z0
+      - key: SESSION_COOKIE_SECURE
+        value: false
+      - key: SESSION_COOKIE_HTTPONLY
+        value: true
+      - key: SESSION_COOKIE_SAMESITE
+        value: Lax
+      - key: PERMANENT_SESSION_LIFETIME_DAYS
+        value: 30
     disk:
       name: political-events-data
       mountPath: /opt/render/project/src/instance

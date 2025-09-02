@@ -30,3 +30,4 @@ Flask-Mail==0.9.1
 
 # Production Server
 gunicorn==21.2.0
+Flask-Session==0.5.0
