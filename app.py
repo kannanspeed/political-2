@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
-# from flask_socketio import SocketIO, emit, join_room, leave_room
+from flask_socketio import SocketIO, emit, join_room, leave_room
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
 import qrcode
@@ -19,7 +19,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['GOOGLE_MAPS_API_KEY'] = os.getenv('GOOGLE_MAPS_API_KEY', 'AIzaSyC4VX_V-P58o0lS1OTAkpfqqRPeNoc61z0')
 
 db = SQLAlchemy(app)
-# socketio = SocketIO(app)
+socketio = SocketIO(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
@@ -707,20 +707,20 @@ def update_user_location():
     
     return jsonify({'success': True})
 
-# Socket.IO Events (Commented out for production)
-# @socketio.on('join_event_room')
-# def on_join_event_room(data):
-#     event_id = data['event_id']
-#     join_room(f'event_{event_id}')
+# Socket.IO Events
+@socketio.on('join_event_room')
+def on_join_event_room(data):
+    event_id = data['event_id']
+    join_room(f'event_{event_id}')
 
-# @socketio.on('leave_event_room')
-# def on_leave_event_room(data):
-#     event_id = data['event_id']
-#     leave_room(f'event_{event_id}')
+@socketio.on('leave_event_room')
+def on_leave_event_room(data):
+    event_id = data['event_id']
+    leave_room(f'event_{event_id}')
 
-# @socketio.on('send_message')
-# def on_send_message(data):
-#     emit('receive_message', data, room=f"event_{data['event_id']}")
+@socketio.on('send_message')
+def on_send_message(data):
+    emit('receive_message', data, room=f"event_{data['event_id']}")
 
 # Error Handlers
 @app.errorhandler(404)
@@ -752,6 +752,6 @@ if __name__ == '__main__':
     debug = os.environ.get('FLASK_ENV') == 'development'
     
     if debug:
-        app.run(debug=True, host='0.0.0.0', port=port)
+        socketio.run(app, debug=True, host='0.0.0.0', port=port)
     else:
-        app.run(debug=False, host='0.0.0.0', port=port)
+        socketio.run(app, debug=False, host='0.0.0.0', port=port)
