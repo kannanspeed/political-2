@@ -14,12 +14,12 @@
             <p class="text-muted mb-0">Event details and registrations</p>
         </div>
         <a href="{{ url_for('party_dashboard') }}" class="btn btn-outline-primary">
-            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
-        </a>
+                <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+            </a>
     </div>
 
     <div class="row">
-        <!-- Event Details -->
+    <!-- Event Details -->
         <div class="col-lg-8">
             <div class="card mb-4">
                 <div class="card-header">
@@ -35,16 +35,16 @@
                             <p><strong>Location:</strong></p>
                             <p class="text-muted">
                                 <i class="fas fa-map-marker-alt me-1"></i>
-                                {{ event.location }}
-                            </p>
+                                    {{ event.location }}
+                                </p>
                             <p><strong>Date & Time:</strong></p>
                             <p class="text-muted">
                                 <i class="fas fa-clock me-1"></i>
                                 {{ event.event_date.strftime('%B %d, %Y at %I:%M %p') }}
                             </p>
-                        </div>
-                    </div>
-                    
+                </div>
+            </div>
+
                     <div class="mt-3">
                         <p><strong>QR Code:</strong></p>
                         <img src="data:image/png;base64,{{ event.qr_code }}" alt="Event QR Code" class="img-fluid" style="max-width: 200px;">
@@ -70,8 +70,8 @@
                         <span class="badge bg-{{ 'success' if event.is_active else 'secondary' }} fs-6">
                             {{ 'Active' if event.is_active else 'Inactive' }}
                         </span>
-                    </div>
-                    
+            </div>
+
                     <div class="mt-3">
                         <p><strong>Created:</strong></p>
                         <small class="text-muted">{{ event.created_at.strftime('%B %d, %Y') }}</small>
@@ -82,57 +82,65 @@
     </div>
 
     <!-- Registrations -->
-    <div class="card">
+            <div class="card">
         <div class="card-header">
             <h5 class="mb-0">Event Registrations</h5>
-        </div>
-        <div class="card-body">
-            {% if registrations %}
-                <div class="table-responsive">
-                    <table class="table table-hover">
+                </div>
+                <div class="card-body">
+                    {% if registrations %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
                         <thead>
-                            <tr>
-                                <th>User</th>
-                                <th>Registration Date</th>
-                                <th>Location</th>
+                                    <tr>
+                                        <th>User</th>
+                                        <th>Registration Date</th>
+                                        <th>Location</th>
                                 <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for registration in registrations %}
-                            <tr>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <div class="avatar-sm me-2">
-                                            <i class="fas fa-user-circle fa-2x text-primary"></i>
-                                        </div>
-                                        <div>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for registration in registrations %}
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="avatar-sm me-2">
+                                                    <i class="fas fa-user-circle fa-2x text-primary"></i>
+                                                </div>
+                                                <div>
                                             <h6 class="mb-0">{{ registration.user.email }}</h6>
                                             <small class="text-muted">{{ registration.user.role.title() }}</small>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
                                     <small class="text-muted">
                                         {{ registration.registered_at.strftime('%b %d, %Y %H:%M') }}
                                     </small>
-                                </td>
-                                <td>
-                                    <small class="text-muted">
-                                        {{ "%.4f"|format(registration.latitude) }}, {{ "%.4f"|format(registration.longitude) }}
-                                    </small>
-                                </td>
-                                <td>
+                                        </td>
+                                        <td>
+                                            {% if registration.latitude and registration.longitude %}
+                                                <button class="btn btn-sm btn-outline-primary" onclick="showUserLocation({{ registration.latitude }}, {{ registration.longitude }})">
+                                                    <i class="fas fa-map-marker-alt me-1"></i>View
+                                                </button>
+                                                <br>
+                                                <small class="text-muted">
+                                                    {{ "%.4f"|format(registration.latitude) }}, {{ "%.4f"|format(registration.longitude) }}
+                                                </small>
+                                            {% else %}
+                                                <span class="text-muted">No location</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
                                     <span class="badge bg-{{ 'success' if registration.attended else 'warning' }}">
                                         {{ 'Attended' if registration.attended else 'Registered' }}
-                                    </span>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            {% else %}
+                                                </span>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
                 <div class="text-center py-4">
                     <i class="fas fa-user-times fa-3x text-muted mb-3"></i>
                     <p class="text-muted">No registrations yet</p>
@@ -141,6 +149,49 @@
         </div>
     </div>
 </div>
+
+<!-- User Location Modal -->
+<div class="modal fade" id="locationModal" tabindex="-1" aria-labelledby="locationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="locationModalLabel">
+                    <i class="fas fa-map-marker-alt me-2 text-primary"></i>
+                    User Location
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="userLocationMap" style="height: 400px; width: 100%; border-radius: 8px;"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- User Details Modal -->
+<div class="modal fade" id="userDetailsModal" tabindex="-1" aria-labelledby="userDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="userDetailsModalLabel">
+                    <i class="fas fa-user me-2 text-info"></i>
+                    User Details
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="userDetailsContent">
+                <!-- Content will be loaded dynamically -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block extra_js %}

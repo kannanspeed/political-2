@@ -62,11 +62,7 @@
                 </div>
                 <div class="card-body">
                     <div id="eventMap" style="height: 400px; border-radius: 8px; background-color: #f8f9fa;">
-                        <div class="text-center py-5">
-                            <i class="fas fa-map fa-3x text-muted mb-3"></i>
-                            <p class="text-muted">Event Location Map</p>
-                            <small class="text-muted">Coordinates: {{ "%.6f"|format(event.latitude) }}, {{ "%.6f"|format(event.longitude) }}</small>
-                        </div>
+                        <!-- Map will be loaded here -->
                     </div>
                     
                     <div class="mt-3">
@@ -200,7 +196,70 @@
 {% endblock %}
 
 {% block extra_js %}
+<!-- Google Maps API -->
+<script src="https://maps.googleapis.com/maps/api/js?key={{ config.GOOGLE_MAPS_API_KEY }}&libraries=places"></script>
+
 <script>
+let eventMap, eventMarker;
+
+// Initialize map when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    initializeEventMap();
+});
+
+function initializeEventMap() {
+    const eventLat = {{ event.latitude }};
+    const eventLng = {{ event.longitude }};
+    
+    if (eventLat && eventLng) {
+        const mapElement = document.getElementById('eventMap');
+        if (mapElement) {
+            // Create the map
+            eventMap = new google.maps.Map(mapElement, {
+                center: { lat: eventLat, lng: eventLng },
+                zoom: 15,
+                mapTypeId: google.maps.MapTypeId.ROADMAP,
+                styles: [
+                    {
+                        featureType: 'poi',
+                        elementType: 'labels',
+                        stylers: [{ visibility: 'off' }]
+                    }
+                ]
+            });
+            
+            // Add event marker
+            eventMarker = new google.maps.Marker({
+                position: { lat: eventLat, lng: eventLng },
+                map: eventMap,
+                title: '{{ event.title }}',
+                icon: {
+                    url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png'
+                },
+                animation: google.maps.Animation.DROP
+            });
+            
+            // Add info window
+            const infoWindow = new google.maps.InfoWindow({
+                content: `
+                    <div style="text-align: center;">
+                        <h6 style="margin: 0 0 5px 0; color: #d63384;">{{ event.title }}</h6>
+                        <p style="margin: 0; font-size: 12px; color: #6c757d;">{{ event.location }}</p>
+                        <small style="color: #6c757d;">{{ event.event_date.strftime('%B %d, %Y at %I:%M %p') }}</small>
+                    </div>
+                `
+            });
+            
+            eventMarker.addListener('click', () => {
+                infoWindow.open(eventMap, eventMarker);
+            });
+            
+            // Show info window by default
+            infoWindow.open(eventMap, eventMarker);
+        }
+    }
+}
+
 function getLocation() {
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
