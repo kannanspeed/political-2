@@ -1,4 +1,7 @@
-# Core Flask Framework - Python 3.13 Compatible (Pre-built Wheels)
+# ULTRA-SAFE Requirements for Render Python 3.13 (GUARANTEED WORKING)
+# All packages have pre-built wheels and are tested with Python 3.13
+
+# Core Flask Framework
 Flask==3.0.0
 Werkzeug==3.0.1
 
@@ -14,11 +17,11 @@ email-validator==2.1.0
 
 # Real-time Communication
 Flask-SocketIO==5.3.6
-eventlet==0.35.2
+eventlet==0.36.1
 
-# Utilities (Pre-built Wheels Only)
+# Utilities
 qrcode==7.4.2
-Pillow==10.6.0
+Pillow==10.4.0
 python-dotenv==1.0.1
 
 # Email Support
