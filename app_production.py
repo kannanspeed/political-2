@@ -1,3 +1,4 @@
+import re
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
@@ -21,6 +22,47 @@ db = SQLAlchemy(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
+
+# Validation Functions
+def validate_email(email):
+    """Validate email format"""
+    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    return re.match(pattern, email) is not None
+
+def validate_phone(phone):
+    """Validate phone number format (10 digits)"""
+    # Remove all non-digit characters
+    clean_phone = re.sub(r'\D', '', phone)
+    return len(clean_phone) == 10
+
+def validate_password(password):
+    """Validate password strength"""
+    if len(password) < 8:
+        return False, "Password must be at least 8 characters long"
+    
+    if not re.search(r'[A-Z]', password):
+        return False, "Password must contain at least one uppercase letter"
+    
+    if not re.search(r'[a-z]', password):
+        return False, "Password must contain at least one lowercase letter"
+    
+    if not re.search(r'\d', password):
+        return False, "Password must contain at least one number"
+    
+    if not re.search(r'[!@#$%^&*(),.?":{}|<>]', password):
+        return False, "Password must contain at least one special character"
+    
+    return True, "Password is strong"
+
+def sanitize_input(text):
+    """Sanitize user input to prevent injection attacks"""
+    if not text:
+        return ""
+    # Remove potentially dangerous characters
+    dangerous_chars = ['<', '>', '"', "'", '&', ';', '(', ')', '{', '}', '[', ']']
+    for char in dangerous_chars:
+        text = text.replace(char, '')
+    return text.strip()
 
 # Custom Jinja2 filters
 @app.template_filter('format_date')
@@ -159,19 +201,51 @@ def login():
         email = request.form.get('email', '').strip().lower()
         password = request.form.get('password', '')
         
-        # Basic validation
+        # Enhanced validation
         if not email or not password:
             flash('Email and password are required', 'error')
             return render_template('login.html')
+        
+        # Validate email format
+        if not validate_email(email):
+            flash('Please enter a valid email address', 'error')
+            return render_template('login.html')
+        
+        # Sanitize inputs
+        email = sanitize_input(email)
+        
+        # Rate limiting check (simple implementation)
+        if 'login_attempts' not in session:
+            session['login_attempts'] = 0
+            session['last_attempt'] = datetime.utcnow()
+        
+        # Check if too many attempts
+        if session['login_attempts'] >= 5:
+            time_diff = datetime.utcnow() - session['last_attempt']
+            if time_diff.total_seconds() < 300:  # 5 minutes lockout
+                flash('Too many login attempts. Please try again in 5 minutes.', 'error')
+                return render_template('login.html')
+            else:
+                # Reset attempts after lockout period
+                session['login_attempts'] = 0
         
         # User authentication
         user = User.query.filter_by(email=email).first()
         
         if not user or not check_password_hash(user.password_hash, password):
-            flash('Invalid email or password', 'error')
+            session['login_attempts'] = session.get('login_attempts', 0) + 1
+            session['last_attempt'] = datetime.utcnow()
+            
+            if session['login_attempts'] >= 3:
+                flash(f'Invalid credentials. {5 - session["login_attempts"]} attempts remaining before lockout.', 'error')
+            else:
+                flash('Invalid email or password', 'error')
             return render_template('login.html')
         
-        # Successful login
+        # Successful login - reset attempts
+        session['login_attempts'] = 0
+        session.pop('last_attempt', None)
+        
         login_user(user)
         flash(f'Welcome back, {user.email}!', 'success')
         
@@ -195,34 +269,96 @@ def signup():
         role = request.form.get('role', 'user')
         party_name = request.form.get('party_name', '').strip()
         
-        # Basic validation
-        if not email or not phone or not password or not confirm_password:
-            flash('All fields are required', 'error')
+        # Enhanced validation
+        errors = []
+        
+        # Required fields check
+        if not email:
+            errors.append('Email is required')
+        if not phone:
+            errors.append('Phone number is required')
+        if not password:
+            errors.append('Password is required')
+        if not confirm_password:
+            errors.append('Password confirmation is required')
+        
+        if errors:
+            flash('Please fill in all required fields', 'error')
             return render_template('signup.html')
         
+        # Email validation
+        if not validate_email(email):
+            flash('Please enter a valid email address', 'error')
+            return render_template('signup.html')
+        
+        # Phone validation
+        if not validate_phone(phone):
+            flash('Please enter a valid 10-digit phone number', 'error')
+            return render_template('signup.html')
+        
+        # Password validation
+        password_valid, password_message = validate_password(password)
+        if not password_valid:
+            flash(password_message, 'error')
+            return render_template('signup.html')
+        
+        # Password confirmation
         if password != confirm_password:
             flash('Passwords do not match', 'error')
             return render_template('signup.html')
         
-        # Check for existing user
+        # Role validation
+        if role not in ['user', 'party']:
+            flash('Invalid role selected', 'error')
+            return render_template('signup.html')
+        
+        # Party name validation for party role
+        if role == 'party':
+            if not party_name:
+                flash('Party name is required for political party registration', 'error')
+                return render_template('signup.html')
+            if len(party_name) < 3:
+                flash('Party name must be at least 3 characters long', 'error')
+                return render_template('signup.html')
+            if len(party_name) > 100:
+                flash('Party name must be less than 100 characters', 'error')
+                return render_template('signup.html')
+        
+        # Sanitize inputs
+        email = sanitize_input(email)
+        phone = sanitize_input(phone)
+        party_name = sanitize_input(party_name) if party_name else None
+        
+        # Check for existing user by email
         if User.query.filter_by(email=email).first():
             flash('Email already registered', 'error')
             return render_template('signup.html')
         
+        # Check for existing user by phone
+        if User.query.filter_by(phone=phone).first():
+            flash('Phone number already registered', 'error')
+            return render_template('signup.html')
+        
         # Create user
-        user = User(
-            email=email,
-            phone=phone,
-            password_hash=generate_password_hash(password),
-            role=role,
-            party_name=party_name if role == 'party' else None
-        )
-        
-        db.session.add(user)
-        db.session.commit()
-        
-        flash('Registration successful! Please login.', 'success')
-        return redirect(url_for('login'))
+        try:
+            user = User(
+                email=email,
+                phone=phone,
+                password_hash=generate_password_hash(password),
+                role=role,
+                party_name=party_name
+            )
+            
+            db.session.add(user)
+            db.session.commit()
+            
+            flash('Registration successful! Please login.', 'success')
+            return redirect(url_for('login'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash('Registration failed. Please try again.', 'error')
+            return render_template('signup.html')
     
     return render_template('signup.html')
 
