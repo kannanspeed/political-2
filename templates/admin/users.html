@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Users - Political Events{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 mb-1">
+                <i class="fas fa-users me-2 text-success"></i>
+                Manage Users
+            </h1>
+            <p class="text-muted mb-0">View and manage all platform users</p>
+        </div>
+        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-primary">
+            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+        </a>
+    </div>
+
+    <!-- Users Table -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">All Users</h5>
+        </div>
+        <div class="card-body">
+            {% if users %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Role</th>
+                                <th>Contact</th>
+                                <th>Status</th>
+                                <th>Events</th>
+                                <th>Joined</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in users %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-sm me-2">
+                                            <i class="fas fa-user-circle fa-2x text-primary"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-0">{{ user.email }}</h6>
+                                            {% if user.party_name %}
+                                                <small class="text-muted">{{ user.party_name }}</small>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ 'primary' if user.role == 'party' else 'success' if user.role == 'user' else 'warning' }}">
+                                        {{ user.role.title() }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if user.phone %}
+                                        <i class="fas fa-phone me-1 text-muted"></i>
+                                        {{ user.phone }}
+                                    {% else %}
+                                        <span class="text-muted">No phone</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-success">Active</span>
+                                </td>
+                                <td>
+                                    {% if user.role == 'party' %}
+                                        <span class="badge bg-info">{{ user.event_registrations|length }}</span>
+                                    {% else %}
+                                        <span class="badge bg-info">{{ user.event_registrations|length }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <small class="text-muted">
+                                        {{ user.created_at.strftime('%b %d, %Y') }}
+                                    </small>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-user-times fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">No users registered yet</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

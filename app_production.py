@@ -1,7 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
-# from flask_socketio import SocketIO, emit, join_room, leave_room  # Commented out for production
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
 import qrcode
@@ -19,7 +18,6 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['GOOGLE_MAPS_API_KEY'] = os.getenv('GOOGLE_MAPS_API_KEY', 'AIzaSyC4VX_V-P58o0lS1OTAkpfqqRPeNoc61z0')
 
 db = SQLAlchemy(app)
-# socketio = SocketIO(app)  # Commented out for production
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
@@ -143,7 +141,7 @@ def health_check():
             'timestamp': datetime.utcnow().isoformat()
         }), 500
 
-# Routes
+# Main Routes
 @app.route('/')
 def index():
     if current_user.is_authenticated:
@@ -249,6 +247,36 @@ def admin_dashboard():
     
     return render_template('admin/dashboard.html', events=events, users=users, tickets=tickets)
 
+@app.route('/admin/events')
+@login_required
+def admin_events():
+    if current_user.role != 'admin':
+        flash('Access denied', 'error')
+        return redirect(url_for('index'))
+    
+    events = Event.query.all()
+    return render_template('admin/events.html', events=events)
+
+@app.route('/admin/users')
+@login_required
+def admin_users():
+    if current_user.role != 'admin':
+        flash('Access denied', 'error')
+        return redirect(url_for('index'))
+    
+    users = User.query.all()
+    return render_template('admin/users.html', users=users)
+
+@app.route('/admin/tickets')
+@login_required
+def admin_tickets():
+    if current_user.role != 'admin':
+        flash('Access denied', 'error')
+        return redirect(url_for('index'))
+    
+    tickets = Ticket.query.all()
+    return render_template('admin/tickets.html', tickets=tickets)
+
 # Political Party Routes
 @app.route('/party/dashboard')
 @login_required
@@ -319,6 +347,21 @@ def create_event():
     
     return render_template('party/create_event.html')
 
+@app.route('/party/event/<int:event_id>')
+@login_required
+def party_event_detail(event_id):
+    if current_user.role != 'party':
+        flash('Access denied', 'error')
+        return redirect(url_for('index'))
+    
+    event = Event.query.get_or_404(event_id)
+    if event.party_id != current_user.id:
+        flash('Access denied', 'error')
+        return redirect(url_for('party_dashboard'))
+    
+    registrations = EventRegistration.query.filter_by(event_id=event_id).all()
+    return render_template('party/event_detail.html', event=event, registrations=registrations)
+
 # User Routes
 @app.route('/user/dashboard')
 @login_required
@@ -332,6 +375,21 @@ def user_dashboard():
     registered_event_ids = [reg.event_id for reg in user_registrations]
     
     return render_template('user/dashboard.html', events=events, registered_event_ids=registered_event_ids)
+
+@app.route('/user/event/<int:event_id>')
+@login_required
+def user_event_detail(event_id):
+    if current_user.role != 'user':
+        flash('Access denied', 'error')
+        return redirect(url_for('index'))
+    
+    event = Event.query.get_or_404(event_id)
+    is_registered = EventRegistration.query.filter_by(
+        user_id=current_user.id, 
+        event_id=event_id
+    ).first() is not None
+    
+    return render_template('user/event_detail.html', event=event, is_registered=is_registered)
 
 @app.route('/user/join_event/<int:event_id>', methods=['POST'])
 @login_required
@@ -367,6 +425,42 @@ def join_event(event_id):
     
     flash('Successfully registered for event!', 'success')
     return redirect(url_for('user_dashboard'))
+
+@app.route('/tickets')
+@login_required
+def tickets():
+    """Support tickets page for users"""
+    if current_user.role == 'admin':
+        return redirect(url_for('admin_tickets'))
+    
+    user_tickets = Ticket.query.filter_by(user_id=current_user.id).all()
+    return render_template('tickets.html', tickets=user_tickets)
+
+@app.route('/create_ticket', methods=['GET', 'POST'])
+@login_required
+def create_ticket():
+    """Create a new support ticket"""
+    if request.method == 'POST':
+        subject = request.form.get('subject', '').strip()
+        message = request.form.get('message', '').strip()
+        
+        if not subject or not message:
+            flash('Subject and message are required', 'error')
+            return render_template('create_ticket.html')
+        
+        ticket = Ticket(
+            user_id=current_user.id,
+            subject=subject,
+            message=message
+        )
+        
+        db.session.add(ticket)
+        db.session.commit()
+        
+        flash('Support ticket created successfully!', 'success')
+        return redirect(url_for('tickets'))
+    
+    return render_template('create_ticket.html')
 
 # API Routes
 @app.route('/api/events')
@@ -410,6 +504,33 @@ with app.app_context():
         db.session.add(admin)
         db.session.commit()
         print("Admin user created: admin@political.com / admin123")
+    
+    # Create demo party user if not exists
+    party_user = User.query.filter_by(role='party').first()
+    if not party_user:
+        party_user = User(
+            email='party@demo.com',
+            phone='9876543210',
+            password_hash=generate_password_hash('party123'),
+            role='party',
+            party_name='Demo Political Party'
+        )
+        db.session.add(party_user)
+        db.session.commit()
+        print("Demo party user created: party@demo.com / party123")
+    
+    # Create demo regular user if not exists
+    regular_user = User.query.filter_by(role='user').first()
+    if not regular_user:
+        regular_user = User(
+            email='user@demo.com',
+            phone='5555555555',
+            password_hash=generate_password_hash('user123'),
+            role='user'
+        )
+        db.session.add(regular_user)
+        db.session.commit()
+        print("Demo regular user created: user@demo.com / user123")
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

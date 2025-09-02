@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Events - Political Events{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 mb-1">
+                <i class="fas fa-calendar-alt me-2 text-primary"></i>
+                Manage Events
+            </h1>
+            <p class="text-muted mb-0">View and manage all political events</p>
+        </div>
+        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-primary">
+            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+        </a>
+    </div>
+
+    <!-- Events Table -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">All Events</h5>
+        </div>
+        <div class="card-body">
+            {% if events %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Party</th>
+                                <th>Location</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                                <th>Registrations</th>
+                                <th>Created</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for event in events %}
+                            <tr>
+                                <td>
+                                    <strong>{{ event.title }}</strong>
+                                    <br>
+                                    <small class="text-muted">{{ event.description[:50] }}...</small>
+                                </td>
+                                <td>
+                                    <span class="badge bg-primary">{{ event.party_name }}</span>
+                                </td>
+                                <td>
+                                    <i class="fas fa-map-marker-alt me-1 text-muted"></i>
+                                    {{ event.location }}
+                                </td>
+                                <td>
+                                    <strong>{{ event.event_date.strftime('%b %d, %Y') }}</strong>
+                                    <br>
+                                    <small class="text-muted">{{ event.event_date.strftime('%I:%M %p') }}</small>
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ 'success' if event.is_active else 'secondary' }}">
+                                        {{ 'Active' if event.is_active else 'Inactive' }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">{{ event.registrations|length }}</span>
+                                </td>
+                                <td>
+                                    <small class="text-muted">
+                                        {{ event.created_at.strftime('%b %d, %Y') }}
+                                    </small>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">No events created yet</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
