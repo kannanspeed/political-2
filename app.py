@@ -707,20 +707,20 @@ def update_user_location():
     
     return jsonify({'success': True})
 
-# Socket.IO Events
-@socketio.on('join_event_room')
-def on_join_event_room(data):
-    event_id = data['event_id']
-    join_room(f'event_{event_id}')
+# Socket.IO Events (Commented out for production)
+# @socketio.on('join_event_room')
+# def on_join_event_room(data):
+#     event_id = data['event_id']
+#     join_room(f'event_{event_id}')
 
-@socketio.on('leave_event_room')
-def on_leave_event_room(data):
-    event_id = data['event_id']
-    leave_room(f'event_{event_id}')
+# @socketio.on('leave_event_room')
+# def on_leave_event_room(data):
+#     event_id = data['event_id']
+#     leave_room(f'event_{event_id}')
 
-@socketio.on('send_message')
-def on_send_message(data):
-    emit('receive_message', data, room=f"event_{data['event_id']}")
+# @socketio.on('send_message')
+# def on_send_message(data):
+#     emit('receive_message', data, room=f"event_{data['event_id']}")
 
 # Error Handlers
 @app.errorhandler(404)
@@ -752,6 +752,6 @@ if __name__ == '__main__':
     debug = os.environ.get('FLASK_ENV') == 'development'
     
     if debug:
-        socketio.run(app, debug=True, host='0.0.0.0', port=port)
+        app.run(debug=True, host='0.0.0.0', port=port)
     else:
-        socketio.run(app, debug=False, host='0.0.0.0', port=port)
+        app.run(debug=False, host='0.0.0.0', port=port)
