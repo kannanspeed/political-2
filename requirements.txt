@@ -1,4 +1,4 @@
-# Core Flask Framework - Python 3.13 Compatible
+# Core Flask Framework - Python 3.13 Compatible (Pre-built Wheels)
 Flask==3.0.0
 Werkzeug==3.0.1
 
@@ -16,9 +16,9 @@ email-validator==2.1.0
 Flask-SocketIO==5.3.6
 eventlet==0.35.2
 
-# Utilities
+# Utilities (Pre-built Wheels Only)
 qrcode==7.4.2
-Pillow==10.2.0
+Pillow==10.6.0
 python-dotenv==1.0.1
 
 # Email Support
