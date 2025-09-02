@@ -542,6 +542,22 @@ def party_event_detail(event_id):
     registrations = EventRegistration.query.filter_by(event_id=event_id).all()
     return render_template('party/event_detail.html', event=event, registrations=registrations)
 
+@app.route('/party/event/<int:event_id>/map')
+@login_required
+def party_event_map(event_id):
+    """Show map page for a specific event"""
+    if current_user.role != 'party':
+        flash('Access denied', 'error')
+        return redirect(url_for('index'))
+    
+    event = Event.query.get_or_404(event_id)
+    if event.party_id != current_user.id:
+        flash('Access denied', 'error')
+        return redirect(url_for('party_dashboard'))
+    
+    registrations = EventRegistration.query.filter_by(event_id=event_id).all()
+    return render_template('party/event_map.html', event=event, registrations=registrations)
+
 # User Routes
 @app.route('/user/dashboard')
 @login_required
