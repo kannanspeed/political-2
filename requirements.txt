@@ -15,9 +15,10 @@ Flask-WTF==1.2.1
 WTForms==3.1.1
 email-validator==2.1.0
 
-# Real-time Communication
-Flask-SocketIO==5.3.6
-eventlet==0.36.1
+# Real-time Communication (Optional - Comment out if causing issues)
+# Flask-SocketIO==5.3.6
+# gevent==23.9.1
+# gevent-websocket==0.10.1
 
 # Utilities
 qrcode==7.4.2
