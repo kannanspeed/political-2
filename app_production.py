@@ -422,7 +422,32 @@ def party_dashboard():
         return redirect(url_for('index'))
     
     events = Event.query.filter_by(party_id=current_user.id).all()
-    return render_template('party/dashboard.html', events=events, now=datetime.utcnow())
+    
+    # Convert events to serializable format for JavaScript
+    events_data = []
+    for event in events:
+        registrations = EventRegistration.query.filter_by(event_id=event.id).all()
+        event_data = {
+            'id': event.id,
+            'title': event.title,
+            'description': event.description,
+            'location': event.location,
+            'latitude': event.latitude,
+            'longitude': event.longitude,
+            'event_date': event.event_date.isoformat() if event.event_date else None,
+            'created_at': event.created_at.isoformat() if event.created_at else None,
+            'registrations': [{
+                'id': reg.id,
+                'user_email': reg.user.email if reg.user else 'Unknown',
+                'latitude': reg.latitude,
+                'longitude': reg.longitude,
+                'attended': reg.attended,
+                'registered_at': reg.registered_at.isoformat() if reg.registered_at else None
+            } for reg in registrations]
+        }
+        events_data.append(event_data)
+    
+    return render_template('party/dashboard.html', events=events, events_data=events_data, now=datetime.utcnow())
 
 @app.route('/party/create_event', methods=['GET', 'POST'])
 @login_required

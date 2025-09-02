@@ -647,7 +647,7 @@ function inviteAllUsers() {
 
 function loadUserDatabaseSummary() {
     // Get all unique users from all events
-    const events = {{ events|tojson }};
+    const events = {{ events_data|tojson }};
     const uniqueUsers = new Set();
     const activeUsers = new Set();
     
@@ -664,11 +664,11 @@ function loadUserDatabaseSummary() {
     
     // Update summary
     document.getElementById('totalUsers').textContent = uniqueUsers.size;
-    document.getElementById('activeUsers').textContent = activeUsers.size;
+    document.getElementById('activeUsers').textContent = uniqueUsers.size;
 }
 
 function loadUserPreview() {
-    const events = {{ events|tojson }};
+    const events = {{ events_data|tojson }};
     const userPreview = [];
     
     events.forEach(event => {
@@ -717,7 +717,7 @@ function sendBulkInvitations() {
     }
     
     // Get all unique users
-    const events = {{ events|tojson }};
+    const events = {{ events_data|tojson }};
     const uniqueUsers = new Set();
     
     events.forEach(event => {
@@ -766,7 +766,7 @@ function showUserDatabase() {
 }
 
 function loadUserDatabase() {
-    const events = {{ events|tojson }};
+    const events = {{ events_data|tojson }};
     const userDatabase = {};
     
     events.forEach(event => {
