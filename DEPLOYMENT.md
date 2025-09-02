@@ -31,8 +31,8 @@
 - **Root Directory**: Leave empty (root of repository)
 
 **Build & Deploy Settings:**
-- **Build Command**: `pip install -r requirements.txt`
-- **Start Command**: `gunicorn --worker-class eventlet -w 1 wsgi:app`
+- **Build Command**: `pip install -r requirements-render.txt`
+- **Start Command**: `gunicorn wsgi:app`
 
 **Plan:**
 - Select "Free" plan (or upgrade if needed)
@@ -103,8 +103,12 @@ Once deployment is successful:
 
 **1. Build Failures**
 - Check build logs in Render dashboard
-- Verify all dependencies in `requirements.txt`
-- Ensure Python version compatibility
+- Verify all dependencies in `requirements-render.txt`
+- Ensure Python version compatibility (use Python 3.11.7)
+- If you see "Getting requirements to build wheel" errors:
+  - Use `requirements-render.txt` instead of `requirements.txt`
+  - Try the simplified start command: `gunicorn wsgi:app`
+  - Check if any packages have version conflicts
 
 **2. Runtime Errors**
 - Check service logs in Render dashboard
