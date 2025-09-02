@@ -184,8 +184,8 @@
                                                     <li><a class="dropdown-item" href="{{ url_for('party_event_detail', event_id=event.id) }}">
                                                         <i class="fas fa-eye me-2"></i>View Details
                                                     </a></li>
-                                                    <li><a class="dropdown-item" href="{{ url_for('party_event_map', event_id=event.id) }}">
-                                                        <i class="fas fa-map-marked-alt me-2"></i>View Map
+                                                    <li><a class="dropdown-item" href="{{ url_for('party_event_detail', event_id=event.id) }}">
+                                                        <i class="fas fa-map-marked-alt me-2"></i>View Map & Details
                                                     </a></li>
                                                     <li><hr class="dropdown-divider"></li>
                                                     <li><a class="dropdown-item text-warning" href="#" onclick="editEvent({{ event.id }})">
@@ -248,8 +248,8 @@
                                             <a href="{{ url_for('party_event_detail', event_id=event.id) }}" class="btn btn-primary btn-sm flex-fill">
                                                 <i class="fas fa-eye me-1"></i>View Details
                                             </a>
-                                            <a href="{{ url_for('party_event_map', event_id=event.id) }}" class="btn btn-outline-info btn-sm">
-                                                <i class="fas fa-map-marked-alt"></i>
+                                            <a href="{{ url_for('party_event_detail', event_id=event.id) }}" class="btn btn-outline-info btn-sm">
+                                                <i class="fas fa-map-marked-alt me-1"></i>Map
                                             </a>
                                         </div>
                                         

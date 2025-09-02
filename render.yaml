@@ -3,8 +3,8 @@ services:
     name: political-events-app
     env: python
     plan: free
-               buildCommand: pip install --only-binary=all -r requirements.txt && python init_db.py
-           startCommand: gunicorn wsgi:app
+    buildCommand: pip install --only-binary=all -r requirements.txt
+    startCommand: python init_db.py && gunicorn wsgi:app
     envVars:
       - key: PYTHON_VERSION
         value: 3.13.0
@@ -13,6 +13,10 @@ services:
       - key: FLASK_ENV
         value: production
       - key: DATABASE_URL
-        value: sqlite:///political_events.db
+        value: sqlite:///instance/political_events.db
       - key: GOOGLE_MAPS_API_KEY
         value: AIzaSyC4VX_V-P58o0lS1OTAkpfqqRPeNoc61z0
+    disk:
+      name: political-events-data
+      mountPath: /opt/render/project/src/instance
+      sizeGB: 1
